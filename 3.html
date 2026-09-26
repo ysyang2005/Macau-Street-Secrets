@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>哪吒降临 - 全流程整合解密</title>
+    <style>
+        /* 全局 CSS Reset 与 Viewport 约束 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --app-height: 100%;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: var(--app-height);
+            overflow: hidden;
+            background-color: #000;
+            font-family: "KaiTi", "STKaiti", "DFKai-SB", "SimSun", serif;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        /* 游戏主容器 */
+        .game-viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0d0d0d;
+        }
+
+        /* 顶栏控制按钮 */
+        .top-control-bar {
+            position: absolute;
+            top: calc(env(safe-area-inset-top, 0px) + 10px);
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 200;
+            pointer-events: auto;
+        }
+
+        .top-bar-btn {
+            background: linear-gradient(145deg, #4a2810, #2a1608);
+            border: 1.5px solid #d4a359;
+            border-radius: 6px;
+            color: #f3e9d2;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-family: "KaiTi", "STKaiti", serif;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transition: transform 0.1s ease, background 0.2s ease;
+        }
+
+        .top-bar-btn:active {
+            transform: scale(0.95);
+            background: #8b1e1e;
+        }
+
+        /* 场景背景图层 */
+        .game-scene-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .bg-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.2s ease, transform 1.2s ease;
+            transform: scale(0.98);
+        }
+
+        .bg-img.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* 左侧悬浮手札图标 */
+        .scroll-icon-btn {
+            position: absolute;
+            left: calc(env(safe-area-inset-left, 0px) + 16px);
+            top: 50%;
+            transform: translateY(-50%) scale(0.8);
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #f3e9d2 0%, #e2ceaa 100%);
+            border: 1.5px solid #8b1e1e;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.2s ease;
+        }
+
+        .scroll-icon-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(-50%) scale(1);
+        }
+
+        .scroll-icon-btn:active {
+            transform: translateY(-50%) scale(0.92);
+        }
+
+        .scroll-icon-content {
+            font-size: 22px;
+            line-height: 1;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        .scroll-icon-badge {
+            position: absolute;
+            bottom: -18px;
+            white-space: nowrap;
+            font-size: 11px;
+            color: #f3e9d2;
+            background: rgba(139, 30, 30, 0.85);
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 163, 89, 0.6);
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        /* 对话框样式组件（与2.html统一：深色金边框） */
+        .dialogue-layer {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+            left: calc(env(safe-area-inset-left, 0px) + 16px);
+            right: calc(env(safe-area-inset-right, 0px) + 16px);
+            display: flex;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: auto;
+            transition: opacity 0.5s ease;
+        }
+
+        .xuan-paper-box {
+            width: 100%;
+            max-width: 600px;
+            min-height: 135px;
+            padding: 16px 20px;
+            background: rgba(7, 11, 13, 0.96);
+            border: 2px solid #c5a059;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            position: relative;
+        }
+
+        .xuan-paper-box:active {
+            transform: scale(0.99);
+        }
+
+        .speaker-name {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 3px;
+            display: inline-block;
+        }
+
+        .speaker-name.elena { color: #38bdf8; border-color: #38bdf8; }
+        .speaker-name.mc { color: #fb7185; border-color: #fb7185; }
+        .speaker-name.system { color: #c5a059; border-color: #c5a059; }
+
+        .dialogue-text {
+            font-size: 14px;
+            color: #bdae93;
+            line-height: 1.5;
+            letter-spacing: 0.5px;
+            min-height: 45px;
+        }
+
+        .typewriter-cursor::after {
+            content: '█';
+            color: #c5a059;
+            animation: blink 0.7s infinite;
+            margin-left: 2px;
+            font-size: 11px;
+        }
+
+        .next-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            font-size: 12px;
+            color: #c5a059;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 卷轴弹窗系统 */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-container {
+            position: relative;
+            width: 85%;
+            max-width: 380px;
+            height: 60vh;
+            max-height: 460px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            transform-origin: top center;
+            transform: scaleY(0);
+            opacity: 0;
+            transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s ease;
+        }
+
+        .modal-overlay.active .scroll-container {
+            transform: scaleY(1);
+            opacity: 1;
+        }
+
+        .scroll-container.closing {
+            transform: scaleY(0) !important;
+            opacity: 0 !important;
+            transition: transform 0.5s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.4s ease !important;
+        }
+
+        .scroll-rod {
+            width: 108%;
+            height: 16px;
+            background: linear-gradient(to right, #2d1808, #7a481c 20%, #d4a359 50%, #7a481c 80%, #2d1808);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            z-index: 2;
+            flex-shrink: 0;
+        }
+
+        .scroll-paper {
+            flex: 1;
+            width: 100%;
+            background-color: #f3e9d2;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(160, 110, 60, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(140, 90, 40, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(180, 130, 70, 0.15) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 2px, transparent 2px, transparent 4px);
+            border-left: 2px solid rgba(139, 90, 43, 0.3);
+            border-right: 2px solid rgba(139, 90, 43, 0.3);
+            box-shadow: inset 0 0 30px rgba(120, 80, 30, 0.3), 0 10px 25px rgba(0,0,0,0.5);
+            padding: 24px 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .puzzle-main-wrapper {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .puzzle-main {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            writing-mode: horizontal-tb;
+        }
+
+        .puzzle-line {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #a81c1c;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .puzzle-note {
+            width: 100%;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #2c2c2c;
+            letter-spacing: 1px;
+            text-align: center;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(92, 29, 17, 0.3);
+            flex-shrink: 0;
+            writing-mode: horizontal-tb;
+        }
+
+        .close-btn {
+            position: absolute;
+            bottom: -48px;
+            padding: 8px 22px;
+            background: #8b1e1e;
+            color: #f3e9d2;
+            border: 1px solid #d4a359;
+            border-radius: 20px;
+            font-size: 13px;
+            font-family: "KaiTi", "STKaiti", serif;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            letter-spacing: 1px;
+            opacity: 0;
+            display: none;
+            transition: opacity 0.4s ease, transform 0.1s ease;
+        }
+
+        .close-btn.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .modal-dialogue-wrapper {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+            width: 90%;
+            max-width: 500px;
+            z-index: 105;
+            transition: opacity 0.4s ease;
+        }
+
+        /* 交互算盘组件 */
+        .abacus-interactive-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .abacus-interactive-layer.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .abacus-frame {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 280px;
+            height: 220px;
+            padding: 16px 12px;
+            background: linear-gradient(145deg, #2a1608 0%, #150a04 100%);
+            border: 4px solid #8b5a2b;
+            border-radius: 12px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.9), 0 0 0 2px #3d210b;
+            position: relative;
+        }
+
+        .abacus-frame::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            transform: translateY(-50%);
+            background: linear-gradient(to bottom, #4a2810, #2a1608, #1a0d04);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        .abacus-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            position: relative;
+            z-index: 3;
+        }
+
+        .column-tag {
+            font-size: 14px;
+            color: #d4a359;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            border-bottom: 1px solid rgba(212, 163, 89, 0.4);
+            padding-bottom: 2px;
+        }
+
+        .wheel-container {
+            width: 64px;
+            height: 150px;
+            background: rgba(10, 5, 2, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(139, 90, 43, 0.4);
+            overflow: hidden;
+            position: relative;
+            touch-action: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .wheel-container.focused {
+            border-color: #d4a359;
+            box-shadow: 0 0 12px rgba(212, 163, 89, 0.4);
+        }
+
+        .wheel-container::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(10,5,2,0.85) 0%, 
+                transparent 30%, 
+                transparent 70%, 
+                rgba(10,5,2,0.85) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .wheel-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(0px);
+            transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .bead-item {
+            width: 52px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff8e7;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            background: linear-gradient(135deg, #e8c37d 0%, #b8860b 35%, #684205 70%, #3a2202 100%);
+            border-radius: 50% / 35%;
+            border: 1px solid rgba(255, 230, 180, 0.5);
+            box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.8), 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 圆形铜制确认按钮 */
+        .confirm-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #5c4328 0%, #2a1d10 70%, #150d06 100%);
+            border: 2px solid #6e5030;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #6d5b4a;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: "KaiTi", "STKaiti", serif;
+            cursor: not-allowed;
+            position: relative;
+            transition: all 0.4s ease;
+            background-image: 
+                radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.4) 41%),
+                repeating-conic-gradient(rgba(212, 163, 89, 0.05) 0deg 15deg, transparent 15deg 30deg);
+        }
+
+        .confirm-btn::after {
+            content: "启";
+            position: relative;
+            z-index: 2;
+        }
+
+        .confirm-btn.active {
+            background: radial-gradient(circle, #f3e9d2 0%, #d4a359 50%, #8b5a2b 100%);
+            border-color: #ffe6b3;
+            color: #4a1508;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(212, 163, 89, 0.6), inset 0 2px 6px rgba(255,255,255,0.8);
+            text-shadow: 0 1px 1px rgba(255,255,255,0.5);
+        }
+
+        .confirm-btn.active:active {
+            transform: scale(0.92);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: calc(env(safe-area-inset-top, 0px) + 50px);
+            left: calc(env(safe-area-inset-left, 0px) + 16px);
+            z-index: 60;
+            padding: 6px 14px;
+            background: linear-gradient(145deg, #4a2810, #2a1608);
+            border: 1.5px solid #d4a359;
+            border-radius: 6px;
+            color: #f3e9d2;
+            font-size: 14px;
+            font-family: "KaiTi", "STKaiti", serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 4px;
+            transition: transform 0.1s ease, opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .back-btn.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 羊皮纸格子矩阵 */
+        .puzzle-grid-container {
+            position: absolute;
+            left: 11.8%;
+            width: 76.4%;
+            top: 36.5%;
+            height: 34.5%;
+            z-index: 40;
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .puzzle-grid-container.visible {
+            display: grid;
+            opacity: 1;
+        }
+
+        .grid-cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .char-text {
+            font-size: min(5.5vw, 24px);
+            font-weight: bold;
+            color: #382413;
+            font-family: "STKaiti", "KaiTi", serif;
+            text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.15);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+
+        .grid-cell.highlight-active .char-text {
+            color: #d9534f !important;
+            text-shadow: 0 0 12px rgba(217, 83, 79, 0.8), 0 0 2px #fff !important;
+            transform: scale(1.15);
+        }
+
+        .grid-cell.solved .char-text {
+            color: #5cb85c !important;
+            text-shadow: 0 0 10px rgba(92, 184, 92, 0.8) !important;
+        }
+
+        .grid-cell.highlight-active::before {
+            content: "";
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(217, 83, 79, 0.22) 0%, rgba(217, 83, 79, 0) 75%);
+            border-radius: 50%;
+            z-index: 1;
+            animation: pulseGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            100% { transform: scale(1.15); opacity: 0.95; }
+        }
+
+        /* 历史解释弹窗 */
+        .history-pop-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 120;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .history-pop-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .history-card {
+            width: 85%;
+            max-width: 320px;
+            background: linear-gradient(135deg, #fbf7ee 0%, #f1e5cf 100%);
+            border: 2px solid #8b1e1e;
+            border-radius: 12px;
+            padding: 20px 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 15px rgba(212, 163, 89, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transform: scale(0.85);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .history-pop-modal.active .history-card {
+            transform: scale(1);
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #8b1e1e;
+            border-bottom: 1px dashed rgba(139, 30, 30, 0.3);
+            padding-bottom: 6px;
+            letter-spacing: 1.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-tag {
+            font-size: 11px;
+            background: #8b1e1e;
+            color: #f3e9d2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+
+        .history-body {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #3d2b1f;
+            text-align: justify;
+            letter-spacing: 0.5px;
+        }
+
+        .history-close-btn {
+            align-self: center;
+            margin-top: 4px;
+            padding: 6px 20px;
+            background: linear-gradient(145deg, #8b1e1e, #5c1d11);
+            color: #f3e9d2;
+            border: 1px solid #d4a359;
+            border-radius: 16px;
+            font-size: 13px;
+            font-family: "KaiTi", serif;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+
+        .history-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 交互推断输入框弹窗 */
+        .input-container-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 110;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .input-container-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .input-card {
+            width: 85%;
+            max-width: 320px;
+            background: linear-gradient(135deg, #fbf7ee 0%, #f1e5cf 100%);
+            border: 2px solid #8b1e1e;
+            border-radius: 12px;
+            padding: 20px 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .input-card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #8b1e1e;
+            border-bottom: 1px dashed rgba(139, 30, 30, 0.3);
+            padding-bottom: 6px;
+        }
+
+        .deduction-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            font-family: "KaiTi", serif;
+            text-align: center;
+            border: 1.5px solid #8b1e1e;
+            border-radius: 6px;
+            outline: none;
+            background: #fff8e7;
+            color: #333;
+        }
+
+        .input-submit-btn {
+            padding: 8px 18px;
+            background: linear-gradient(145deg, #8b1e1e, #5c1d11);
+            color: #f3e9d2;
+            border: 1px solid #d4a359;
+            border-radius: 16px;
+            font-size: 14px;
+            font-family: "KaiTi", serif;
+            cursor: pointer;
+            align-self: center;
+        }
+
+        .input-submit-btn:active {
+            transform: scale(0.95);
+        }
+
+        .avatar-bubble {
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background: linear-gradient(135deg, #ffffff 0%, #f4efe6 100%);
+            border: 1px solid #8b1e1e;
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .avatar-bubble.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .avatar-img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #8b1e1e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .bubble-text {
+            font-size: 12px;
+            color: #333;
+            font-family: "KaiTi", serif;
+        }
+
+        .grid-cell.fade-out .char-text {
+            opacity: 0 !important;
+            transform: scale(0.2) !important;
+        }
+
+        .target-glow {
+            color: #a81c1c !important;
+            text-shadow: 0 0 10px #ffea9f, 0 0 20px #e6a100, 0 0 30px #e6a100 !important;
+            z-index: 80 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-viewport">
+        
+        <!-- 顶栏控制按钮 -->
+        <div class="top-control-bar">
+            <button class="top-bar-btn" onclick="goBack()">返回上一页</button>
+            <button class="top-bar-btn" onclick="saveProgress()">保存</button>
+            <button class="top-bar-btn" onclick="resetProgress()">重置</button>
+        </div>
+        
+        <!-- 场景图层 -->
+        <div class="game-scene-layer">
+            <img id="bgImage" src="nezha_1.jpg" alt="场景背景" class="bg-img active">
+        </div>
+
+        <!-- 左侧悬浮手札图标 -->
+        <div class="scroll-icon-btn" id="scrollIconBtn">
+            <span class="scroll-icon-content">📜</span>
+            <span class="scroll-icon-badge">手札</span>
+        </div>
+
+        <!-- 场景对话框 -->
+        <div class="dialogue-layer" id="dialogueWrapper">
+            <div class="xuan-paper-box" id="dialogueBox">
+                <div class="speaker-name" id="speakerName">角色名</div>
+                <div class="dialogue-text" id="dialogueText"></div>
+                <div class="next-indicator">▼ 点击继续</div>
+            </div>
+        </div>
+
+        <!-- 卷轴解密手札弹窗 -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="scroll-container" id="scrollContainer">
+                <div class="scroll-rod"></div>
+                <div class="scroll-paper">
+                    <div class="puzzle-main-wrapper">
+                        <div class="puzzle-main">
+                            <div class="puzzle-line">正门双联立乾坤，</div>
+                            <div class="puzzle-line">匾中一字定中枢；</div>
+                            <div class="puzzle-line">取首取尾拆笔画，</div>
+                            <div class="puzzle-line">天地人位各归数，</div>
+                            <div class="puzzle-line">拨动算珠方启门。</div>
+                        </div>
+                    </div>
+                    <div class="puzzle-note">
+                        旁注：上联为天，取首字；下联为人，取末字；匾中为地，取中字。拆其笔画定位数。
+                    </div>
+                </div>
+                <div class="scroll-rod"></div>
+                
+                <button class="close-btn" id="closeBtn">收起手札</button>
+            </div>
+
+            <!-- 手札下方的二次讲解对话框 -->
+            <div class="modal-dialogue-wrapper" id="modalDialogueWrapper">
+                <div class="xuan-paper-box" id="modalDialogueBox">
+                    <div class="speaker-name" id="modalSpeakerName">艾莲娜</div>
+                    <div class="dialogue-text" id="modalDialogueText"></div>
+                    <div class="next-indicator">▼ 点击继续</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 可操作算盘解密组件 -->
+        <div class="abacus-interactive-layer" id="abacusLayer">
+            <div class="abacus-frame">
+                <div class="abacus-column">
+                    <div class="column-tag">天</div>
+                    <div class="wheel-container" id="wheel-0">
+                        <div class="wheel-track"></div>
+                    </div>
+                </div>
+                <div class="abacus-column">
+                    <div class="column-tag">地</div>
+                    <div class="wheel-container" id="wheel-1">
+                        <div class="wheel-track"></div>
+                    </div>
+                </div>
+                <div class="abacus-column">
+                    <div class="column-tag">人</div>
+                    <div class="wheel-container" id="wheel-2">
+                        <div class="wheel-track"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="confirm-btn" id="confirmBtn"></div>
+        </div>
+
+        <!-- 交互推断输入框弹窗组件 -->
+        <div class="input-container-modal" id="deductionModal">
+            <div class="input-card">
+                <div class="input-card-title">匾中何字方为中枢？</div>
+                <div style="font-size: 13px; color: #5c1d11;">「保民是赖」—— 请推断并输入匾文的中枢汉字：</div>
+                <input type="text" id="deductionInput" class="deduction-input" maxlength="2" placeholder="输入汉字">
+                <button class="input-submit-btn" id="deductionSubmitBtn">确认推断</button>
+            </div>
+        </div>
+
+        <!-- 羊皮纸解密 UI 层组件 -->
+        <button class="back-btn" id="backBtn">
+            <span>‹</span> 返回暗格
+        </button>
+
+        <!-- 绝对定位矩阵容器 -->
+        <div class="puzzle-grid-container" id="gridContainer"></div>
+
+        <!-- 历史解释弹窗组件 -->
+        <div class="history-pop-modal" id="historyModal">
+            <div class="history-card">
+                <div class="history-title">
+                    <span id="historyTitle">澳门文史</span>
+                    <span class="history-tag">线索卡</span>
+                </div>
+                <div class="history-body" id="historyBody"></div>
+                <button class="history-close-btn" id="historyCloseBtn">收下线索</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const scriptsScene1 = [
+            { speaker: "主角", text: "循着石阶往上走百余步，就是大三巴哪吒古庙了。郑一的线索，就藏在这座百年小庙的正殿里。" },
+            { speaker: "艾莲娜", text: "1888 年澳门鼠疫时乡民分灵建的庙，比柿山老庙晚了两百年。偏偏海盗把线索藏在这儿，最危险的地方反而最安全。" },
+            { speaker: "艾莲娜", text: "这副刻在石头上的对联是建庙时的原物，上下联都是光绪戊戌年的原刻，史料里有明确记载。" },
+            { speaker: "主角", text: "没错，中间的横编写着「保民是赖」，意思是百姓安康全赖神明庇佑，是岭南庙宇常见的匾额体例。" },
+            { speaker: "主角", text: "让我看看郑一又在这里藏了什么线索。" }
+        ];
+
+        const scriptInModal = {
+            speaker: "艾莲娜",
+            text: "这里还真的有一副手札。从他的记载来看，这次的规则很清晰：我们要从上联、下联、牌匾，提取对应的文字，数出它的笔画数，再按天、地、人三才的位置拨对算珠，应该就可以了.....不过算盘在哪里呢"
+        };
+
+        const scriptsScene3 = [
+            { speaker: "艾莲娜", text: "暗格里还藏了张羊皮纸，密密麻麻排了一版汉字。" },
+            { speaker: "主角", text: "点击字格组合词条，解开所有隐藏的文化线索，就能找到下一处地点。" }
+        ];
+
+        // 解密成功后的结局对话线索
+        const scriptsEnd = [
+            { speaker: "艾莲娜", text: "恋爱巷？就在大三巴牌坊旁边的那条彩色小巷，我之前做攻略时见过。" },
+            { speaker: "主角", text: "看来我们要去那里了" }
+        ];
+
+        let currentIndex = 0;
+        let charIndex = 0;
+        let timer = null;
+        let isTyping = false;
+        
+        let currentDialogueMode = "SCENE_1";
+
+        const bgImg = document.getElementById('bgImage');
+        const speakerEl = document.getElementById('speakerName');
+        const textEl = document.getElementById('dialogueText');
+        const boxEl = document.getElementById('dialogueBox');
+        const dialogueWrapper = document.getElementById('dialogueWrapper');
+
+        const modalOverlay = document.getElementById('modalOverlay');
+        const scrollContainer = document.getElementById('scrollContainer');
+        const closeBtn = document.getElementById('closeBtn');
+        const scrollIconBtn = document.getElementById('scrollIconBtn');
+
+        const modalDialogueWrapper = document.getElementById('modalDialogueWrapper');
+        const modalDialogueBox = document.getElementById('modalDialogueBox');
+        const modalSpeakerEl = document.getElementById('modalSpeakerName');
+        const modalTextEl = document.getElementById('modalDialogueText');
+
+        const abacusLayer = document.getElementById('abacusLayer');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+        const backBtn = document.getElementById('backBtn');
+        const gridContainer = document.getElementById('gridContainer');
+
+        const historyModal = document.getElementById('historyModal');
+        const historyTitle = document.getElementById('historyTitle');
+        const historyBody = document.getElementById('historyBody');
+        const historyCloseBtn = document.getElementById('historyCloseBtn');
+
+        const deductionModal = document.getElementById('deductionModal');
+        const deductionInput = document.getElementById('deductionInput');
+        const deductionSubmitBtn = document.getElementById('deductionSubmitBtn');
+
+        function getCurrentScriptList() {
+            if (currentDialogueMode === "SCENE_3") return scriptsScene3;
+            if (currentDialogueMode === "END") return scriptsEnd;
+            return scriptsScene1;
+        }
+
+        function typeWriterDialogue() {
+            const scriptList = getCurrentScriptList();
+            const currentScript = scriptList[currentIndex];
+            speakerEl.textContent = currentScript.speaker;
+            speakerEl.className = 'speaker-name ' + (currentScript.speaker === '艾莲娜' ? 'elena' : currentScript.speaker === '主角' ? 'mc' : 'system');
+
+            if (charIndex < currentScript.text.length) {
+                textEl.textContent += currentScript.text.charAt(charIndex);
+                charIndex++;
+                timer = setTimeout(typeWriterDialogue, 40);
+            } else {
+                isTyping = false;
+            }
+        }
+
+        function showNextDialogue() {
+            const scriptList = getCurrentScriptList();
+            if (isTyping) {
+                clearTimeout(timer);
+                textEl.textContent = scriptList[currentIndex].text;
+                isTyping = false;
+            } else {
+                if (currentIndex < scriptList.length - 1) {
+                    currentIndex++;
+                    textEl.textContent = "";
+                    charIndex = 0;
+                    isTyping = true;
+                    typeWriterDialogue();
+                } else {
+                    if (currentDialogueMode === "SCENE_1") {
+                        transitionToNextScene();
+                    } else if (currentDialogueMode === "SCENE_3") {
+                        initParchmentPuzzle();
+                    } else if (currentDialogueMode === "END") {
+                        // 最后一句台词结束后进入 4.html
+                        window.location.href = "4.html";
+                    }
+                }
+            }
+        }
+
+        function transitionToNextScene() {
+            currentDialogueMode = "SCENE_2";
+            dialogueWrapper.style.opacity = '0';
+            setTimeout(() => { dialogueWrapper.style.display = 'none'; }, 500);
+
+            bgImg.classList.remove('active');
+            setTimeout(() => {
+                bgImg.src = "nezha_2.jpg";
+                bgImg.classList.add('active');
+                setTimeout(openScrollModal, 800);
+            }, 600);
+        }
+
+        function openScrollModal() {
+            scrollContainer.classList.remove('closing');
+            modalOverlay.classList.add('active');
+
+            modalSpeakerEl.textContent = scriptInModal.speaker;
+            modalSpeakerEl.className = 'speaker-name ' + (scriptInModal.speaker === '艾莲娜' ? 'elena' : scriptInModal.speaker === '主角' ? 'mc' : 'system');
+            modalTextEl.textContent = "";
+            charIndex = 0;
+            isTyping = true;
+            typeWriterModal();
+        }
+
+        function typeWriterModal() {
+            if (charIndex < scriptInModal.text.length) {
+                modalTextEl.textContent += scriptInModal.text.charAt(charIndex);
+                charIndex++;
+                timer = setTimeout(typeWriterModal, 40);
+            } else {
+                isTyping = false;
+            }
+        }
+
+        function handleModalDialogueClick() {
+            if (isTyping) {
+                clearTimeout(timer);
+                modalTextEl.textContent = scriptInModal.text;
+                isTyping = false;
+            } else {
+                modalDialogueWrapper.style.opacity = '0';
+                setTimeout(() => {
+                    modalDialogueWrapper.style.display = 'none';
+                    closeBtn.classList.add('visible');
+                }, 400);
+            }
+        }
+
+        function closeScrollModal() {
+            scrollContainer.classList.add('closing');
+            setTimeout(() => {
+                modalOverlay.classList.remove('active');
+                scrollIconBtn.classList.add('visible');
+                abacusLayer.classList.add('visible');
+            }, 500);
+        }
+
+        /* 算盘逻辑 */
+        const ITEM_HEIGHT = 50;
+        const totalNumbers = 10;
+        const abacusState = [0, 0, 0];
+        let hasUserOperated = false;
+
+        function initAbacus() {
+            [0, 1, 2].forEach(colIndex => {
+                const container = document.getElementById(`wheel-${colIndex}`);
+                const track = container.querySelector('.wheel-track');
+                track.innerHTML = '';
+
+                for (let i = 0; i < totalNumbers; i++) {
+                    const bead = document.createElement('div');
+                    bead.className = 'bead-item';
+                    bead.textContent = i;
+                    track.appendChild(bead);
+                }
+
+                const initialOffset = (container.clientHeight / 2) - (ITEM_HEIGHT / 2);
+                track.style.transform = `translateY(${initialOffset}px)`;
+
+                setupDragLogic(container, track, colIndex, initialOffset);
+            });
+        }
+
+        function setupDragLogic(container, track, colIndex, initialOffset) {
+            let startY = 0;
+            let currentTranslateY = initialOffset;
+            let isDragging = false;
+
+            function onStart(e) {
+                isDragging = true;
+                container.classList.add('focused');
+                startY = e.touches ? e.touches[0].clientY : e.clientY;
+                track.style.transition = 'none';
+            }
+
+            function onMove(e) {
+                if (!isDragging) return;
+                const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+                const deltaY = currentY - startY;
+                const newY = currentTranslateY + deltaY;
+
+                const minY = initialOffset - ((totalNumbers - 1) * ITEM_HEIGHT);
+                const maxY = initialOffset;
+                
+                if (newY <= maxY + 20 && newY >= minY - 20) {
+                    track.style.transform = `translateY(${newY}px)`;
+                }
+            }
+
+            function onEnd(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                container.classList.remove('focused');
+
+                const style = window.getComputedStyle(track);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                const actualY = matrix.m41 || matrix.f;
+
+                let selectedIndex = Math.round((initialOffset - actualY) / ITEM_HEIGHT);
+                selectedIndex = Math.max(0, Math.min(totalNumbers - 1, selectedIndex));
+
+                const snapY = initialOffset - (selectedIndex * ITEM_HEIGHT);
+                track.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                track.style.transform = `translateY(${snapY}px)`;
+                currentTranslateY = snapY;
+
+                abacusState[colIndex] = selectedIndex;
+                hasUserOperated = true;
+                checkConfirmButtonState();
+            }
+
+            container.addEventListener('touchstart', onStart, { passive: true });
+            container.addEventListener('touchmove', onMove, { passive: true });
+            container.addEventListener('touchend', onEnd);
+
+            container.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+        }
+
+        function checkConfirmButtonState() {
+            if (hasUserOperated) {
+                confirmBtn.classList.add('active');
+            }
+        }
+
+        confirmBtn.addEventListener('click', () => {
+            if (!confirmBtn.classList.contains('active')) return;
+            
+            const result = abacusState.join('');
+
+            if (result === '795') {
+                triggerSuccessSequence();
+            } else if (result === '755') {
+                alert("算盘微微震动——「保民是赖」四字中，「是」字前承保民之愿，后接庇佑之实，乃匾文中枢。「是」字共有 9 画，请将「地」位算珠拨到 9。");
+            } else {
+                alert("算盘没有任何反应，数字似乎不正确，再试试看吧。");
+            }
+        });
+
+        function triggerSuccessSequence() {
+            abacusLayer.classList.remove('visible');
+            scrollIconBtn.classList.remove('visible');
+
+            bgImg.classList.remove('active');
+            setTimeout(() => {
+                bgImg.src = "nezha_3.jpg";
+                bgImg.classList.add('active');
+
+                setTimeout(() => {
+                    currentDialogueMode = "SCENE_3";
+                    currentIndex = 0;
+                    charIndex = 0;
+                    textEl.textContent = "";
+
+                    dialogueWrapper.style.display = 'flex';
+                    setTimeout(() => {
+                        dialogueWrapper.style.opacity = '1';
+                        isTyping = true;
+                        typeWriterDialogue();
+                    }, 10);
+                }, 800);
+            }, 600);
+        }
+
+        function triggerHintInputContainer() {
+            deductionInput.value = "";
+            deductionModal.classList.add('active');
+        }
+
+        deductionSubmitBtn.addEventListener('click', () => {
+            const val = deductionInput.value.trim();
+            if (val === "是") {
+                deductionModal.classList.remove('active');
+                alert("推断正确！「是」字前承保民之愿，后接庇佑之实，乃匾文中枢。「是」字共有 9 画，请重新拨动「地」位算珠。");
+            } else if (val !== "") {
+                alert("此字并非匾文中枢，再细细考量「保民是赖」之意。");
+            }
+        });
+
+        /* 羊皮纸解密数据与逻辑 */
+        const historyData = {
+            "哪吒": "中国神话中的道教护法神，在澳门本地具有独特的本土信仰根基。",
+            "茨林围": "位于大三巴牌坊后方的古老围村，曾是早期日本天主教徒及本地居民的聚居地，亦是澳门哪吒信俗的重要发源地之一。",
+            "瘟疫": "19世纪末澳门曾爆发严重瘟疫，据传当时柿山居民请哪吒神像出巡后疫情平息，此后建庙供奉以祈求平安。",
+            "乾坤圈": "哪吒随身携带的标志性法宝之一，象征圈化天地、驱邪除魔的至刚力量。",
+            "藕身": "源自《封神演义》中太乙真人以莲藕为哪吒重塑肉身的典故，象征重生与超脱。",
+            "大三巴": "即圣保禄教堂遗址，澳门标志性地标，其后方紧邻的哪吒庙形成了独特的“中西宗教共存”景观。",
+            "風火輪": "哪吒脚踩的传奇法宝，双轮踏火，代表迅捷与风火之力。",
+            "太乙": "即太乙真人，哪吒的授业恩师，赋予其法宝并助其重塑莲花之身。"
+        };
+
+        const charMatrix = [
+            ['哪', '大', '吒', '太', '爱'],
+            ['茨', '巷', '風', '林', '圍'],
+            ['藕', '三', '火', '愛', '巷'],
+            ['身', '戀', '瘟', '乙', '疫'],
+            ['乾', '巴', '輪', '坤', '圈']
+        ];
+
+        const targetChars = ['戀', '愛', '爱', '巷'];
+        let selectedCells = []; // 存储结构 [{row, col, char, el, index}]
+        let matchedWords = new Set();
+        let isParchmentCompleted = false;
+
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            playClick() {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            },
+            playSuccess() {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, index) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + index * 0.15);
+                    gain.gain.setValueAtTime(0, this.ctx.currentTime + index * 0.15);
+                    gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + index * 0.15 + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + index * 0.15 + 1.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + index * 0.15);
+                    osc.stop(this.ctx.currentTime + index * 0.15 + 1.2);
+                });
+            }
+        };
+
+        function initParchmentPuzzle() {
+            dialogueWrapper.style.opacity = '0';
+            setTimeout(() => { dialogueWrapper.style.display = 'none'; }, 400);
+
+            backBtn.classList.add('visible');
+            gridContainer.classList.add('visible');
+
+            gridContainer.innerHTML = '';
+            let index = 0;
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const char = charMatrix[r][c];
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.index = index;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.dataset.char = char;
+
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'char-text';
+                    textSpan.textContent = char;
+                    cell.appendChild(textSpan);
+
+                    cell.addEventListener('click', () => handleCellClick(cell, r, c, char, index));
+
+                    // 还原已解锁与已选择的状态
+                    if (matchedWords.has(char)) {
+                        cell.classList.add('solved');
+                    }
+
+                    gridContainer.appendChild(cell);
+                    index++;
+                }
+            }
+        }
+
+        function handleCellClick(el, r, c, char, index) {
+            if (isParchmentCompleted || el.classList.contains("solved")) return;
+
+            if (targetChars.includes(char)) {
+                showAvatarBubble(el, "这个字似乎是最终谜底的文字…");
+                return;
+            }
+
+            AudioFX.playClick();
+
+            const existingIndex = selectedCells.findIndex(item => item.row === r && item.col === c);
+
+            if (existingIndex >= 0) {
+                selectedCells.splice(existingIndex, 1);
+                el.classList.remove('highlight-active');
+            } else {
+                selectedCells.push({ row: r, col: c, char: char, el: el, index: index });
+                el.classList.add('highlight-active');
+                checkUnorderedMatch();
+            }
+        }
+
+        function checkUnorderedMatch() {
+            const currentSelectedChars = selectedCells.map(item => item.char);
+            const selectedSet = new Set(currentSelectedChars);
+
+            for (const [key, detail] of Object.entries(historyData)) {
+                if (matchedWords.has(key)) continue;
+
+                // 兼容繁简体匹配："風"与"风"、"圍"与"围"、"愛"与"爱"
+                const keyChars = key.split("").map(c => {
+                    if (c === "风") return "風";
+                    if (c === "围") return "圍";
+                    return c;
+                });
+
+                const isMatched = keyChars.every(char => selectedSet.has(char));
+
+                if (isMatched) {
+                    matchedWords.add(key);
+                    markMatchedCells(keyChars);
+                    showHistoryModal(key, detail);
+                    checkAllDistractionsCleared();
+                    break;
+                }
+            }
+        }
+
+        function markMatchedCells(keyChars) {
+            const remainingSelected = [];
+
+            selectedCells.forEach(item => {
+                const charIndex = keyChars.indexOf(item.char);
+                if (charIndex >= 0) {
+                    item.el.classList.remove('highlight-active');
+                    item.el.classList.add('solved');
+                    keyChars.splice(charIndex, 1);
+                } else {
+                    remainingSelected.push(item);
+                }
+            });
+
+            selectedCells = remainingSelected;
+        }
+
+        function showHistoryModal(title, content) {
+            historyTitle.textContent = title;
+            historyBody.textContent = content;
+            historyModal.classList.add('active');
+        }
+
+        historyCloseBtn.addEventListener('click', () => {
+            historyModal.classList.remove('active');
+        });
+
+        function showAvatarBubble(cell, message) {
+            const existingBubble = cell.querySelector('.avatar-bubble');
+            if (existingBubble) existingBubble.remove();
+
+            const bubble = document.createElement('div');
+            bubble.className = 'avatar-bubble';
+            bubble.innerHTML = `
+                <div class="avatar-img">主</div>
+                <div class="bubble-text">${message}</div>
+            `;
+            cell.appendChild(bubble);
+
+            requestAnimationFrame(() => bubble.classList.add('active'));
+
+            setTimeout(() => {
+                bubble.classList.remove('active');
+                setTimeout(() => bubble.remove(), 300);
+            }, 1500);
+        }
+
+        function checkAllDistractionsCleared() {
+            if (matchedWords.size === Object.keys(historyData).length) {
+                triggerParchmentSuccess();
+            }
+        }
+
+        function triggerParchmentSuccess() {
+            isParchmentCompleted = true;
+            AudioFX.playSuccess();
+
+            const allCells = document.querySelectorAll('.grid-cell');
+            const targetElements = [];
+
+            allCells.forEach(cell => {
+                const char = cell.dataset.char;
+                if (!targetChars.includes(char)) {
+                    cell.classList.add('fade-out');
+                } else {
+                    targetElements.push(cell);
+                }
+            });
+
+            setTimeout(() => {
+                const containerRect = gridContainer.getBoundingClientRect();
+                const centerX = containerRect.width / 2;
+                const centerY = containerRect.height / 2;
+
+                const desiredOrder = ['戀', '愛', '巷'];
+                const filteredTargets = [];
+
+                desiredOrder.forEach(ch => {
+                    const found = targetElements.find(el => el.dataset.char === ch || (ch === '愛' && el.dataset.char === '爱'));
+                    if (found && !filteredTargets.includes(found)) {
+                        filteredTargets.push(found);
+                    }
+                });
+
+                const spacing = 50;
+
+                filteredTargets.forEach((cell, i) => {
+                    const textSpan = cell.querySelector('.char-text');
+                    textSpan.classList.add('target-glow');
+
+                    const cellRect = cell.getBoundingClientRect();
+                    const currentCellCenterX = cellRect.left + cellRect.width / 2 - containerRect.left;
+                    const currentCellCenterY = cellRect.top + cellRect.height / 2 - containerRect.top;
+
+                    const targetX = centerX + (i - 1) * spacing;
+                    const targetY = centerY;
+
+                    const deltaX = targetX - currentCellCenterX;
+                    const deltaY = targetY - currentCellCenterY;
+
+                    textSpan.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.5)`;
+                });
+
+                setTimeout(() => {
+                    gridContainer.classList.remove('visible');
+                    gridContainer.style.display = 'none';
+                    backBtn.classList.remove('visible');
+
+                    currentDialogueMode = "END";
+                    currentIndex = 0;
+                    charIndex = 0;
+                    textEl.textContent = "";
+
+                    dialogueWrapper.style.display = 'flex';
+                    setTimeout(() => {
+                        dialogueWrapper.style.opacity = '1';
+                        isTyping = true;
+                        typeWriterDialogue();
+                    }, 10);
+                }, 1200);
+
+            }, 600);
+        }
+
+        function goBack() {
+            if (currentDialogueMode === "END") {
+                currentDialogueMode = "SCENE_3";
+                dialogueWrapper.style.opacity = '0';
+                dialogueWrapper.style.display = 'none';
+                gridContainer.style.display = 'grid';
+                gridContainer.classList.add('visible');
+                backBtn.classList.add('visible');
+                bgImg.src = "nezha_3.jpg";
+            } else if (currentDialogueMode === "SCENE_3") {
+                currentDialogueMode = "SCENE_2";
+                gridContainer.classList.remove('visible');
+                gridContainer.style.display = 'none';
+                backBtn.classList.remove('visible');
+                abacusLayer.classList.add('visible');
+                scrollIconBtn.classList.add('visible');
+                dialogueWrapper.style.opacity = '0';
+                dialogueWrapper.style.display = 'none';
+                bgImg.src = "nezha_2.jpg";
+            } else if (currentDialogueMode === "SCENE_2") {
+                currentDialogueMode = "SCENE_1";
+                abacusLayer.classList.remove('visible');
+                scrollIconBtn.classList.remove('visible');
+                modalOverlay.classList.remove('active');
+                deductionModal.classList.remove('active');
+                bgImg.src = "nezha_1.jpg";
+                currentIndex = 0;
+                charIndex = 0;
+                textEl.textContent = "";
+                dialogueWrapper.style.display = 'flex';
+                dialogueWrapper.style.opacity = '1';
+                isTyping = true;
+                typeWriterDialogue();
+            } else if (currentDialogueMode === "SCENE_1") {
+                window.history.back();
+            }
+        }
+
+        backBtn.addEventListener('click', goBack);
+
+        function saveProgress() {
+            const data = {
+                mode: currentDialogueMode,
+                currentIndex: currentIndex,
+                matchedWords: Array.from(matchedWords),
+                isParchmentCompleted: isParchmentCompleted
+            };
+            localStorage.setItem("nezha_game_save", JSON.stringify(data));
+            alert("进度已成功保存！");
+        }
+
+        function resetProgress() {
+            if (confirm("确定要重置当前游戏进度吗？")) {
+                localStorage.removeItem("nezha_game_save");
+                location.reload();
+            }
+        }
+
+        boxEl.addEventListener('click', showNextDialogue);
+        modalDialogueBox.addEventListener('click', handleModalDialogueClick);
+        closeBtn.addEventListener('click', closeScrollModal);
+        
+        scrollIconBtn.addEventListener('click', () => {
+            modalDialogueWrapper.style.display = 'none';
+            closeBtn.classList.add('visible');
+            openScrollModal();
+        });
+
+        function updateAppHeight() {
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        }
+        window.addEventListener('resize', updateAppHeight);
+        window.addEventListener('orientationchange', updateAppHeight);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateAppHeight();
+            initAbacus();
+
+            const savedData = localStorage.getItem("nezha_game_save");
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    currentDialogueMode = data.mode || "SCENE_1";
+                    currentIndex = data.currentIndex || 0;
+                    matchedWords = new Set(data.matchedWords || []);
+                    isParchmentCompleted = data.isParchmentCompleted || false;
+                } catch (e) {
+                    console.error("存档数据解析失败", e);
+                }
+            }
+
+            speakerEl.textContent = getCurrentScriptList()[currentIndex].speaker;
+            isTyping = true;
+            typeWriterDialogue();
+        });
+    </script>
+</body>
+</html>
