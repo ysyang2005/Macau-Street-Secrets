@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>戀愛巷之謎 - 第二幕：新坐標</title>
+    <style>
+        :root { 
+            --pink-love: #df6c85; 
+            --gold-main: #dfb76c; 
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --sketch-color: #2b1d11; 
+            --hint-red: #c93b3b;    
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0c; font-family: sans-serif; }
+
+        #game-container {
+            width: 100%; height: 100%; position: relative;
+            background: url('bg_love_lane.jpg') center/cover no-repeat;
+        }
+
+        /* 右上角重置按鈕樣式 */
+        #reset-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: rgba(44, 37, 31, 0.8);
+            border: 1.5px solid var(--gold-main);
+            color: var(--gold-main);
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+        #reset-btn:active {
+            background: var(--gold-main);
+            color: #1a1512;
+        }
+
+        /* 信件外殼 */
+        #parchment-wrapper {
+            position: absolute; 
+            width: 160px; height: 130px; 
+            perspective: 1000px; 
+            cursor: pointer; 
+            display: none; 
+            z-index: 999;
+            top: 0; 
+            left: 50%;
+            transition: opacity 0.5s;
+        }
+
+        /* S形掉落動畫 */
+        .animate-fall { 
+            display: block !important;
+            animation: fall-s-curve 4s forwards ease-in-out; 
+        }
+
+        /* 狀態一：全螢幕放大檢視（位於中央） */
+        #parchment-wrapper.expanded {
+            display: block !important;
+            animation: none;
+            top: 45% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) scale(3.2) !important;
+            z-index: 99999;
+        }
+
+        /* 狀態二：下一頁解密時，縮放至左側側欄縮略圖 */
+        #parchment-wrapper.thumbnail {
+            display: block !important;
+            animation: none;
+            top: 40px !important;
+            left: 20px !important;
+            transform: translate(0, 0) scale(0.65) !important;
+            z-index: 999;
+            box-shadow: 0 0 15px rgba(223, 183, 108, 0.4);
+        }
+
+        #parchment-inner {
+            width: 100%; height: 100%; 
+            transition: transform 0.6s;
+            transform-style: preserve-3d; 
+            position: relative;
+        }
+        #parchment-inner.is-flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute; 
+            width: 100%; height: 100%;
+            backface-visibility: hidden; 
+            background-size: cover;
+            background-position: center;
+            clip-path: inset(0% 4% 0% 4%); 
+        }
+        .face-front { background-image: url('1.jpg'); }
+        .face-back { 
+            background-image: url('1.jpg'); 
+            transform: rotateY(180deg) scaleX(-1); 
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; gap: 14px; 
+        }
+
+        /* 九宮格與線圈佈局 */
+        .sketch-grid-wrapper { flex: 1; height: 90%; position: relative; }
+        .sketch-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 8px 6px; width: 100%; height: 100%; }
+        .sketch-box { border: 1.5px solid var(--sketch-color); background: rgba(45, 27, 14, 0.02); border-radius: 2px; }
+        .sketch-box.hashed { background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(45, 27, 14, 0.15) 3px, rgba(45, 27, 14, 0.15) 4px); }
+        .svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+
+        /* 右側圖形密碼 */
+        .sketch-right-column { display: grid; grid-template-rows: repeat(3, 1fr); gap: 4px; width: 32px; height: 95%; z-index: 2; }
+        .symbol-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; }
+        .num-hint { font-size: 8px; color: var(--hint-red); font-weight: bold; transform: scaleX(-1); margin: 2px 0; font-family: monospace, sans-serif; }
+        .symbol-top { width: 24px; height: 20px; border: 1.5px solid var(--sketch-color); background: linear-gradient(to bottom, transparent 20%, var(--sketch-color) 20%, var(--sketch-color) 25%, transparent 25%, transparent 45%, var(--sketch-color) 45%, var(--sketch-color) 50%, transparent 50%, transparent 70%, var(--sketch-color) 70%, var(--sketch-color) 75%, transparent 75%); position: relative; }
+        .symbol-top::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1.5px; background: var(--sketch-color); transform: translateX(-50%); }
+        .symbol-middle { width: 24px; height: 24px; border: 1.5px solid var(--sketch-color); border-top-left-radius: 12px; border-top-right-radius: 12px; background: linear-gradient(to bottom, transparent 35%, var(--sketch-color) 35%, var(--sketch-color) 40%, transparent 40%, transparent 65%, var(--sketch-color) 65%, var(--sketch-color) 70%, transparent 70%); position: relative; }
+        .symbol-middle::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1.5px; background: var(--sketch-color); transform: translateX(-50%); }
+        .symbol-bottom-flow { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .symbol-bottom-window { width: 24px; height: 14px; border: 1.5px solid var(--sketch-color); background: linear-gradient(to bottom, transparent 45%, var(--sketch-color) 45%, var(--sketch-color) 55%, transparent 55%); position: relative; margin-bottom: 2px; }
+        .symbol-bottom-window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1.5px; background: var(--sketch-color); transform: translateX(-50%); }
+        .symbol-bottom-line { width: 30px; height: 1.5px; background: var(--sketch-color); margin-bottom: 2px; }
+
+        /* 中央滾輪密碼鎖 UI */
+        #lock-container {
+            position: absolute;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            z-index: 500;
+        }
+        .lock-panel {
+            display: flex;
+            background: linear-gradient(135deg, #2c251f 0%, #1a1512 100%);
+            border: 3px solid var(--gold-main);
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            gap: 15px;
+        }
+        .lock-slot { display: flex; flex-direction: column; align-items: center; }
+        .lock-btn {
+            background: #42352b; border: 1px solid var(--gold-main);
+            color: var(--gold-main); font-size: 18px; font-weight: bold;
+            width: 36px; height: 28px; cursor: pointer; border-radius: 4px;
+        }
+        .lock-btn:active { background: var(--gold-main); color: #1a1512; }
+        .lock-num {
+            font-size: 32px; font-weight: bold; color: #fff;
+            font-family: monospace; margin: 8px 0; width: 40px; text-align: center;
+            text-shadow: 0 0 10px var(--gold-main);
+        }
+        .lock-title { color: var(--gold-main); font-size: 12px; margin-bottom: 10px; letter-spacing: 2px; }
+
+        /* 古舊碳化羊皮紙 */
+        #new-scroll-container {
+            position: absolute;
+            top: 36%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 360px;
+            padding: 30px 25px 25px 25px;
+            background-color: #dfcdad;
+            background-image: radial-gradient(circle at center, rgba(255,255,255,0.15), rgba(0,0,0,0.05));
+            border: 2px solid #5a4225;
+            border-radius: 4px;
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.7),
+                inset 0 0 25px rgba(90, 66, 37, 0.4),
+                inset 0 0 12px #2b1d11;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 1s ease-out;
+        }
+        #new-scroll-container.show {
+            display: flex;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .scroll-title {
+            font-family: 'Noto Serif TC', 'Georgia', serif;
+            font-weight: bold;
+            font-size: 18px;
+            color: #4a2f13;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #7d5c36;
+            padding-bottom: 6px;
+            width: 100%;
+            text-align: center;
+        }
+        .scroll-poem {
+            font-family: 'Kaiti', 'STKaiti', 'DFKai-SB', serif; 
+            font-size: 19px;
+            font-weight: bold;
+            color: #1c120c;
+            line-height: 2.0;
+            letter-spacing: 2px;
+            text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.4);
+            white-space: nowrap;
+        }
+        .scroll-prefix {
+            color: #8c2727;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        /* 答案輸入區域容器 */
+        #answer-area {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .input-row {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+        }
+        #text-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #7d5c36;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #2b1d11;
+            outline: none;
+            text-align: center;
+        }
+        #text-input::placeholder { color: #8a735b; font-weight: normal; }
+        .action-btn {
+            padding: 8px 14px;
+            background: #5a4225;
+            color: #dfcdad;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .action-btn:active { background: #3b2a16; }
+        .hint-btn { background: transparent; color: #8c2727; border: 1px solid #8c2727; }
+        .hint-btn:active { background: rgba(140, 39, 39, 0.1); }
+
+        /* 對話框 */
+        .vn-panel {
+            position: absolute;
+            bottom: calc(var(--safe-bottom, 0px) + 16px);
+            left: 12px;
+            right: 12px;
+            background: rgba(10, 10, 12, 0.92);
+            border: 1px solid rgba(223, 183, 108, 0.35);
+            border-radius: 10px;
+            padding: 14px 16px;
+            z-index: 1000;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .name-box {
+            display: inline-block;
+            background: rgba(223, 183, 108, 0.2);
+            color: #dfb76c;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(223, 183, 108, 0.4);
+        }
+        .text-box {
+            color: #e8dcc8;
+            font-size: 15px;
+            line-height: 1.7;
+            min-height: 40px;
+        }
+        .click-hint {
+            text-align: right;
+            color: #8a7a60;
+            font-size: 13px;
+            margin-top: 6px;
+            animation: hintBlink 1.2s ease-in-out infinite;
+        }
+        @keyframes fall-s-curve {
+            0% { transform: translate(-50%, -300px); opacity: 0; }
+            15% { opacity: 1; }
+            30% { transform: translate(-60%, 200px); }
+            50% { transform: translate(-40%, 500px); }
+            70% { transform: translate(-55%, 650px); }
+            100% { transform: translate(-50%, 680px); opacity: 1; }
+        }
+
+        @keyframes hintBlink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .lock-hint-btn {
+            display: block;
+            margin: 12px auto 0;
+            padding: 6px 20px;
+            background: rgba(197, 160, 89, 0.2);
+            border: 1px solid #c5a059;
+            border-radius: 20px;
+            color: #c5a059;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .lock-hint-btn:active { background: rgba(197, 160, 89, 0.4); }
+        .lock-hint-text {
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid rgba(197,160,89,0.3);
+            border-radius: 8px;
+            color: #e8dcc8;
+            font-size: 13px;
+            line-height: 1.6;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <button id="reset-btn" onclick="resetGame()">↻ 重置遊戲</button>
+
+    <div id="parchment-wrapper" onclick="handleParchmentClick()">
+        <div id="parchment-inner">
+            <div class="card-face face-front"></div>
+            <div class="card-face face-back">
+                <div class="sketch-grid-wrapper">
+                    <div class="sketch-grid">
+                        <div class="sketch-box"></div>
+                        <div class="sketch-box hashed"></div>
+                        <div class="sketch-box"></div>
+                        <div class="sketch-box hashed"></div>
+                        <div class="sketch-box"></div>
+                        <div class="sketch-box hashed"></div>
+                        <div class="sketch-box"></div>
+                        <div class="sketch-box hashed"></div>
+                        <div class="sketch-box"></div>
+                    </div>
+                    <svg class="svg-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M 12,12 C 12,2 50,5 50,25 C 50,45 88,40 88,65 C 88,85 65,95 65,85 C 65,75 12,35 12,12 Z" fill="none" stroke="#2b1d11" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="sketch-right-column">
+                    <div class="symbol-wrapper"><div class="num-hint">308</div><div class="symbol-top"></div></div>
+                    <div class="symbol-wrapper"><div class="num-hint">462</div><div class="symbol-middle"></div></div>
+                    <div class="symbol-wrapper"><div class="symbol-bottom-flow"><div class="symbol-bottom-window"></div><div class="symbol-bottom-line"></div><div class="num-hint">672</div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="new-scroll-container">
+        <div class="scroll-title">【下一個坐標】</div>
+        <div class="scroll-poem"><span class="scroll-prefix">✥</span>盧凝明月照高軒，</div>
+        <div class="scroll-poem"><span class="scroll-prefix">✥</span>家道重溫舊日言。</div>
+        <div class="scroll-poem"><span class="scroll-prefix">✥</span>大啟朱門迎過客，</div>
+        <div class="scroll-poem"><span class="scroll-prefix">✥</span>屋藏金玉待真源。</div>
+        
+        <div id="answer-area">
+            <div class="input-row">
+                <input type="text" id="text-input" placeholder="請輸入目的地名稱..." autocomplete="off">
+                <button class="action-btn" onclick="submitAnswer()">確認</button>
+            </div>
+            <button class="action-btn hint-btn" onclick="showPoemHint()">💡 獲取提示</button>
+        </div>
+    </div>
+
+
+    <div id="lock-container">
+        <div class="lock-title">請輸入三位數密碼鎖</div>
+        <div class="lock-panel">
+            <div class="lock-slot">
+                <button class="lock-btn" onclick="tuneLock(0, 1)">▲</button>
+                <div id="lock-n0" class="lock-num">0</div>
+                <button class="lock-btn" onclick="tuneLock(0, -1)">▼</button>
+            </div>
+            <div class="lock-slot">
+                <button class="lock-btn" onclick="tuneLock(1, 1)">▲</button>
+                <div id="lock-n1" class="lock-num">0</div>
+                <button class="lock-btn" onclick="tuneLock(1, -1)">▼</button>
+            </div>
+            <div class="lock-slot">
+                <button class="lock-btn" onclick="tuneLock(2, 1)">▲</button>
+                <div id="lock-n2" class="lock-num">0</div>
+                <button class="lock-btn" onclick="tuneLock(2, -1)">▼</button>
+            </div>
+        </div>
+        <div class="lock-hint-btn" onclick="showLockHint()">💡 提示</div>
+        <div class="lock-hint-text" id="lock-hint-text"></div>
+    </div>
+
+    <div class="vn-panel" onclick="nextPage()">
+        <div id="name-box" class="name-box">艾琳</div>
+        <div id="dialogue" class="text-box"></div>
+        <div id="hint-text" class="click-hint"></div>
+    </div>
+</div>
+
+<script>
+    const storyNodes = [
+        { name: "艾琳", text: "這裡為什麼叫戀愛巷？" },
+        { name: "主角", text: "傳說中是因為……這條巷子位於聖母玫瑰堂與大三巴牌坊之間，昔日是教會進行婚禮的必經之路。每當新人從教堂走出來，踏入這條小巷，總會在那片粉紅色的牆影下交換誓言，期許未來的愛情能像這裡的磚石一樣堅固。" },
+        { name: "艾琳", text: "欸......好像飄下了什麼" }, 
+        { name: "主角", text: "嗯？這可能是一個密碼，我看看手冊…有了，手冊提示我們，戀愛電影館外牆的窗戶是解開密碼的關鍵！" }, 
+        { name: "主角", text: "仔細看，左側的符號好像和戀愛電影館的窗戶能對應起來" }, 
+        { name: "主角", text: "這裡的圈的位置好像標注了對應的數字…" },
+        { name: "系統", text: "【卡噠！】撥輪密碼筒成功卡在正確的數字上。密碼筒彈開了" },
+        { name: "艾琳", text: "哇！密碼筒底部好像掉出了另一張紙！這張紙看起來年代更久遠了……上面寫的是詩嗎？" },
+        { name: "艾琳", text: "事不宜遲，線索都指向了同一個地方，我們立刻前往「盧家大屋」吧！" }
+    ];
+
+    let currentStep = 0;
+    let isTyping = false;
+    let typeTimer = null;
+    let parchmentState = "falling"; 
+    let isFlipped = false;
+    let currentLock = [0, 0, 0];
+    let interval15sTimer = null;
+    let isUnlocked = false; 
+    let isPoemSolved = false; 
+
+    const wrapper = document.getElementById('parchment-wrapper');
+    const inner = document.getElementById('parchment-inner');
+    const lockContainer = document.getElementById('lock-container');
+    const scrollContainer = document.getElementById('new-scroll-container');
+    const dialogueBox = document.getElementById('dialogue');
+    const nameBox = document.getElementById('name-box');
+    const hintText = document.getElementById('hint-text');
+    const answerArea = document.getElementById('answer-area');
+    const textInput = document.getElementById('text-input');
+
+    window.onload = () => {
+        runScene(0); 
+    };
+
+    function resetGame() {
+        clearInterval(typeTimer);
+        clearTimeout(interval15sTimer);
+        currentStep = 0;
+        isTyping = false;
+        parchmentState = "falling";
+        isFlipped = false;
+        isUnlocked = false;
+        isPoemSolved = false;
+        currentLock = [0, 0, 0];
+
+        wrapper.style.removeProperty('display');
+        wrapper.className = ""; 
+        inner.classList.remove('is-flipped');
+        lockContainer.style.display = "none";
+        
+        answerArea.style.display = "flex";
+        textInput.value = "";
+        scrollContainer.classList.remove('show');
+        setTimeout(() => { scrollContainer.style.display = "none"; }, 500);
+
+        lockContainer.innerHTML = `
+            <div class="lock-title">請輸入三位數密碼鎖</div>
+            <div class="lock-panel">
+                <div class="lock-slot">
+                    <button class="lock-btn" onclick="tuneLock(0, 1)">▲</button>
+                    <div id="lock-n0" class="lock-num">0</div>
+                    <button class="lock-btn" onclick="tuneLock(0, -1)">▼</button>
+                </div>
+                <div class="lock-slot">
+                    <button class="lock-btn" onclick="tuneLock(1, 1)">▲</button>
+                    <div id="lock-n1" class="lock-num">0</div>
+                    <button class="lock-btn" onclick="tuneLock(1, -1)">▼</button>
+                </div>
+                <div class="lock-slot">
+                    <button class="lock-btn" onclick="tuneLock(2, 1)">▲</button>
+                    <div id="lock-n2" class="lock-num">0</div>
+                    <button class="lock-btn" onclick="tuneLock(2, -1)">▼</button>
+                </div>
+            </div>`;
+        
+        lockHintLevel = 0;
+        document.getElementById('lock-hint-text').style.display = 'none';
+        updateLockUI();
+        runScene(0);
+    }
+
+    function runScene(index) {
+        currentStep = index;
+        isTyping = true;
+        
+        const node = storyNodes[index];
+        nameBox.innerText = node.name;
+        dialogueBox.innerHTML = "";
+        
+        clearInterval(typeTimer);
+        clearTimeout(interval15sTimer);
+
+        let charIdx = 0;
+        typeTimer = setInterval(() => {
+            if (charIdx < node.text.length) {
+                dialogueBox.innerHTML += node.text.charAt(charIdx);
+                
+                if (currentStep === 2 && charIdx === 1 && parchmentState === "falling") {
+                    startFallAnimation();
+                }
+                charIdx++;
+            } else {
+                clearInterval(typeTimer);
+                isTyping = false;
+                updateHintText();
+
+                // 不在此處自動跳過密碼鎖，必須玩家親自解開
+
+            }
+        }, 45);
+    }
+
+
+    function startFallAnimation() {
+        wrapper.classList.remove('animate-fall');
+        // Set start state: off-screen top, transparent
+        wrapper.style.display = 'block';
+        wrapper.style.transition = 'none';
+        wrapper.style.opacity = '0';
+        wrapper.style.transform = 'translate(-50%, -300px)';
+        // Force reflow
+        void wrapper.offsetWidth;
+        // After reflow, transition to landing position with bounce
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                wrapper.style.transition = 'transform 3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out';
+                wrapper.style.opacity = '1';
+                wrapper.style.transform = 'translate(-50%, 420px)';
+            });
+        });
+    }
+
+    function updateHintText() {
+        if (isUnlocked) {
+            if (isPoemSolved) {
+                if (currentStep === storyNodes.length - 1) {
+                    hintText.innerText = "▼ 點擊對話框前往下一關「盧家大屋」";
+                } else {
+                    hintText.innerText = "▼ 點擊繼續故事";
+                }
+            } else {
+                hintText.innerText = " 填寫正確目的地以通關。";
+            }
+            return;
+        }
+
+        if (currentStep === 2 && parchmentState === 'falling') {
+            hintText.innerText = " 🔍 必須點擊地上的信件以繼續推進故事！"; 
+        } else if (currentStep === 3) {
+            if (!isFlipped) {
+                hintText.innerText = "▼ 點擊翻轉獲取線索";
+            } else {
+                hintText.innerText = "▼ 點擊對話框繼續下一頁";
+            }
+        } else if (currentStep === 4) {
+            hintText.innerText = "🔐 撥動下方滾輪，輸入正確三位數密碼";
+        } else if (currentStep >= 5) {
+            hintText.innerText = "▼ 點擊繼續故事";
+        } else {
+            hintText.innerText = "▼ 點擊繼續故事";
+        }
+    }
+
+    // 對話面板點擊
+    function nextPage() {
+        if (currentStep === 2 && parchmentState === "falling") { 
+            return; 
+        }
+
+        if (isTyping) {
+            clearInterval(typeTimer);
+            dialogueBox.innerHTML = storyNodes[currentStep].text;
+            isTyping = false;
+            updateHintText();
+            if (currentStep === 2 && parchmentState === "falling") {
+                startFallAnimation();
+            }
+            return;
+        }
+
+        if (currentStep === 3) {
+            if (!isFlipped) {
+                return; 
+            }
+            wrapper.className = "thumbnail";
+            parchmentState = "thumbnail";
+            lockContainer.style.display = "flex";
+            runScene(4);
+            return;
+        }
+
+        if (currentStep === 4) {
+            if (!isUnlocked) {
+                return; // 必須親自解開密碼鎖才能繼續
+            }
+            runScene(6);
+            return;
+        }
+        
+        if (currentStep === 7) {
+            if (!isPoemSolved) return; 
+        }
+
+        // 最後一句台詞點擊時，跳轉至 5.html
+        if (currentStep === storyNodes.length - 1) {
+            window.location.href = '5.html';
+            return;
+        }
+
+        if (currentStep < storyNodes.length - 1) {
+            runScene(currentStep + 1);
+        }
+    }
+
+    // 信紙點擊邏輯
+    function handleParchmentClick() {
+        if (isUnlocked) return; 
+        
+        if (parchmentState === "falling") {
+            wrapper.classList.remove('animate-fall');
+            wrapper.className = "expanded";
+            wrapper.style.setProperty('display', 'block', 'important'); 
+            inner.classList.add('is-flipped');
+            isFlipped = true;
+            parchmentState = "expanded";
+            updateHintText();
+            
+            runScene(3);
+        } else if (parchmentState === "expanded" && !isFlipped) {
+            inner.classList.add('is-flipped');
+            isFlipped = true;
+            updateHintText(); 
+        } else if (parchmentState === "thumbnail") {
+            wrapper.className = "expanded";
+            parchmentState = "expanded";
+        } else if (parchmentState === "expanded" && isFlipped && currentStep >= 4) {
+            wrapper.className = "thumbnail";
+            parchmentState = "thumbnail";
+        }
+    }
+
+    let lockHintLevel = 0;
+    const lockHints = [
+        "右側三組數字不是密碼本身——觀察它們旁邊的窗戶圖案，對照戀愛電影館外牆真實的窗戶形狀。",
+        "蛇形虛線上的圓圈標記了讀取順序。依序看每個窗戶對應的數字，每組只取其中一位數字。",
+        "三個窗戶依蛇形路徑讀取：第一個對應「308」取末位8，第二個對應「672」取中位7，第三個對應「462」取首位4。密碼是 8-7-4。"
+    ];
+    function showLockHint() {
+        const el = document.getElementById('lock-hint-text');
+        if (lockHintLevel < lockHints.length) {
+            el.style.display = 'block';
+            el.innerText = "💡 提示 " + (lockHintLevel + 1) + "：" + lockHints[lockHintLevel];
+            lockHintLevel++;
+        }
+    }
+
+    function tuneLock(wheelIndex, direction) {
+        if (isUnlocked) return;
+        currentLock[wheelIndex] = (currentLock[wheelIndex] + direction + 10) % 10;
+        lockHintLevel = 0;
+        document.getElementById('lock-hint-text').style.display = 'none';
+        updateLockUI();
+        checkUnlock();
+    }
+
+    function updateLockUI() {
+        const n0 = document.getElementById(`lock-n0`);
+        const n1 = document.getElementById(`lock-n1`);
+        const n2 = document.getElementById(`lock-n2`);
+        if (n0 && n1 && n2) {
+            n0.innerText = currentLock[0];
+            n1.innerText = currentLock[1];
+            n2.innerText = currentLock[2];
+        }
+    }
+
+    function checkUnlock() {
+        if (currentLock[0] === 8 && currentLock[1] === 7 && currentLock[2] === 4) {
+            clearTimeout(interval15sTimer);
+            isUnlocked = true;
+
+            wrapper.style.removeProperty('display');
+            lockContainer.style.display = "none";
+
+            scrollContainer.style.display = "flex";
+            setTimeout(() => {
+                scrollContainer.classList.add('show');
+            }, 50);
+
+            runScene(6);
+        }
+    }
+
+    // 提交藏頭詩答案驗證（支援繁體、簡體與英文）
+    function submitAnswer() {
+        const userInput = textInput.value.trim().toLowerCase();
+        const validAnswers = ["盧家大屋", "卢家大屋", "lou kau mansion"];
+
+        if (validAnswers.includes(userInput)) {
+            isPoemSolved = true;
+            answerArea.style.display = "none"; 
+            scrollContainer.classList.remove('show');
+            setTimeout(() => { scrollContainer.style.display = "none"; }, 500);
+            
+            // 答對後繼續劇情
+            runScene(8);
+        } else {
+            alert("看來這個地方不對，再仔細觀察一下詩句的開頭？");
+        }
+    }
+
+    // 提示按鈕事件
+    function showPoemHint() {
+        alert("提示：試著把這首四句詩每句的【第一個字】連起來讀讀看？");
+    }
+</script>
+</body>
+</html>
