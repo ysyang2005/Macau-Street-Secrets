@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>紅旗幫海盜遺秘：聖保祿孤壁的誓言</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #070b0d;
+            --card-bg: rgba(13, 21, 25, 0.94);
+            --panel-border: #c5a059; 
+            --accent-gold: #c5a059;
+            --button-gold: #f6c042;
+            --text-main: #e3d3b4;
+            --character-elena: #38bdf8;
+            --character-mc: #fb7185;
+            --accent-red: #d1523d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020405;
+        }
+
+        body {
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Serif TC', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes hullVibrate {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+        }
+        .vibrate-active { animation: hullVibrate 0.35s ease-in-out; }
+
+        .background-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            transition: background-image 0.8s ease-in-out; z-index: 1;
+        }
+        .bg-ruins { background-image: url('bg_ruins.jpg'); }
+        .bg-vault { background-image: url('bg_vault.jpg'); }
+        .bg-museum { background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.75)), url('bg_museum.jpg'); }
+        .bg-nezha { background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('bg_nezha.jpg'); }
+
+        .vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%);
+            pointer-events: none; z-index: 2;
+        }
+
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; display: none; }
+        .screen.active { display: flex; }
+
+        #adventure-screen { 
+            flex-direction: column;
+            justify-content: flex-end; 
+            padding: 16px calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+        }
+        
+        .dialogue-box {
+            background: rgba(7, 11, 13, 0.96); border: 2px solid var(--panel-border); border-radius: 12px;
+            padding: 16px 20px; width: 100%; height: 135px; position: relative; backdrop-filter: blur(8px); cursor: pointer; z-index: 10;
+        }
+        .character-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; display: inline-block; border-bottom: 2px solid transparent; }
+        .character-name.elena { color: var(--character-elena); border-color: var(--character-elena); }
+        .character-name.mc { color: var(--character-mc); border-color: var(--character-mc); }
+        .character-name.system { color: var(--accent-gold); border-color: var(--accent-gold); }
+        
+        .dialogue-text { font-size: 14px; line-height: 1.5; color: #bdae93; min-height: 45px; }
+        .typewriter-cursor::after { content: '█'; color: var(--accent-gold); animation: blink 0.7s infinite; margin-left: 2px; font-size: 11px; }
+        .next-indicator { position: absolute; bottom: 12px; right: 16px; color: var(--accent-gold); animation: pulse 1.5s infinite; font-size: 12px; display: none; }
+        .next-indicator.show { display: block; }
+
+        #puzzle-screen {
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+        }
+
+        .puzzle-card-container {
+            width: 100%;
+            max-width: 380px;
+            background: var(--card-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 14px;
+            backdrop-filter: blur(10px);
+            max-height: 96vh;
+            overflow-y: auto;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+            padding-bottom: 8px;
+        }
+        .card-header-title { font-size: 0.95rem; color: var(--accent-gold); font-weight: bold; display: flex; align-items: center; gap: 6px; }
+        .stage-badge { font-size: 0.68rem; background: rgba(197, 160, 89, 0.15); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 2px 8px; border-radius: 10px; }
+
+        .manuscript-area {
+            background: rgba(5, 8, 10, 0.6); border: 1px dashed rgba(197, 160, 89, 0.4); border-radius: 8px; padding: 10px;
+        }
+        .manuscript-area h3 { font-size: 0.78rem; color: var(--accent-gold); margin-bottom: 4px; }
+        .manuscript-area p { font-size: 0.75rem; line-height: 1.4; color: #cbd5e0; text-align: justify; }
+        .manuscript-area .code-word { color: var(--accent-red); font-weight: bold; }
+
+        .card-viewport {
+            width: 100%;
+            background: #040608;
+            border: 1px solid #23343b;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .stage-container { width: 100%; display: none; }
+        .stage-container.active { display: flex; flex-direction: column; }
+
+        .hunt-matrix-grid { width: 100%; padding: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .matrix-item { 
+            background: linear-gradient(135deg, #141d21 0%, #090e10 100%); 
+            border: 1px solid #2c3e44; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.3rem; cursor: pointer; aspect-ratio: 1.1 / 1;
+        }
+        .matrix-item.found { border-color: var(--accent-gold); background: #261e12; opacity: 0.4; pointer-events: none; }
+
+        .facade-frame { width: 100%; aspect-ratio: 1.2 / 1; position: relative; background: #05080a; }
+        .slot { 
+            position: absolute; width: 44px; height: 44px; background: #020305; 
+            border: 1.5px dashed #3a4d54; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; 
+            transform: translate(-50%, -50%); cursor: pointer;
+        }
+        
+        .slot-top { top: 25%; left: 50%; }
+        .slot-bottom-left { top: 68%; left: 22%; }
+        .slot-bottom-center { top: 68%; left: 50%; }
+        .slot-bottom-right { top: 68%; left: 78%; }
+        
+        .slot.occupied { border: 1.5px solid var(--accent-gold); background: radial-gradient(circle, #1a2118 0%, #070a05 100%); }
+
+        .s3-embedded-layout { width: 100%; padding: 6px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .rules-bar {
+            background: rgba(197, 160, 89, 0.06); border: 1px solid rgba(197, 160, 89, 0.25); border-radius: 6px;
+            padding: 6px 8px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .rule-item { font-size: 0.65rem; line-height: 1.3; color: #bdae93; }
+        .rule-item strong { color: var(--accent-gold); }
+
+        .matrix-scroll { overflow-x: auto; width: 100%; border: 1px solid #232a2c; border-radius: 4px; }
+        .history-table { width: 100%; border-collapse: collapse; min-width: 340px; text-align: center; font-size: 0.62rem; }
+        .history-table th { background: #111618; color: #a0aec0; padding: 5px 2px; border: 1px solid #1c2224; }
+        .history-table td { padding: 6px 2px; border: 1px solid #1c2224; color: #cbd5e0; cursor: pointer; }
+        .history-table td.active-cell { background: rgba(197, 160, 89, 0.25); color: var(--accent-gold); font-weight: bold; }
+
+        .input-board-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .input-card-mini { background: #0d1214; border: 1px solid #232d30; border-radius: 4px; padding: 5px 2px; display: flex; flex-direction: column; align-items: center; }
+        .card-title-mini { font-size: 0.6rem; color: #8a99ad; margin-bottom: 3px; }
+        .dot-row-mini { display: flex; gap: 4px; }
+        
+        .matrix-dot-container { position: relative; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+        .matrix-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; transition: all 0.2s; z-index: 2; }
+        .matrix-dot.status-0 { background: #20282b; border: 1px solid #3a4454; }
+        .matrix-dot.status-1 {
+            background: radial-gradient(circle at 35% 35%, #f6e05e 0%, #d4af37 70%, #977415 100%);
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
+        }
+        .matrix-dot-container.has-error::before {
+            content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border: 1px solid #e53e3e; border-radius: 50%; z-index: 1; animation: pulse-red 1.5s infinite;
+        }
+
+        .history-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(7, 12, 15, 0.97); backdrop-filter: blur(6px); 
+            z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 16px; text-align: center; opacity: 0; visibility: hidden; transition: opacity 0.2s; 
+        }
+        .history-overlay.show { opacity: 1; visibility: visible; }
+        .history-box h4 { color: var(--accent-gold); font-size: 0.88rem; margin-bottom: 6px; }
+        .history-box p { color: #cbd5e0; font-size: 0.75rem; line-height: 1.4; text-align: justify; }
+        .history-timer { margin-top: 8px; font-size: 0.65rem; color: #52666e; }
+
+        .card-footer { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(197, 160, 89, 0.2); padding-top: 10px; }
+        .bag-bar { display: flex; justify-content: space-between; align-items: center; }
+        .bag-label { font-size: 0.72rem; color: #68828c; }
+        .bag-slots { display: flex; gap: 6px; }
+        .bag-slot { width: 34px; height: 34px; background: #020305; border: 1px solid #23343b; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; }
+        .bag-slot.selected { border-color: var(--accent-gold); box-shadow: 0 0 6px var(--accent-gold); background: #131a11; }
+
+        .terminal-log-row { font-size: 0.7rem; color: #a4b7be; min-height: 22px; line-height: 1.3; }
+
+        .action-buttons { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
+        .btn-card { padding: 11px; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; border: none; letter-spacing: 1px; }
+        .btn-card-secondary { background: rgba(197, 160, 89, 0.1); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+        .btn-card-primary { background: linear-gradient(130deg, #f6c042 0%, #d49a17 100%); color: #0d1112; transition: opacity 0.2s; }
+
+        .system-nav-bar {
+            position: absolute; top: 12px; left: 12px; z-index: 1000;
+            display: flex; gap: 6px;
+        }
+        .sys-btn {
+            background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(197, 160, 89, 0.5);
+            padding: 5px 10px; border-radius: 4px; color: var(--accent-gold);
+            font-size: 11px; cursor: pointer; backdrop-filter: blur(4px);
+            display: flex; align-items: center; gap: 4px; transition: all 0.2s;
+        }
+        .sys-btn:hover { background: rgba(197, 160, 89, 0.2); }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes pulse-red { 0% { transform: scale(1); opacity: 1; } 70% { transform: scale(1.2); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
+
+        .stage3-story-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 8, 10, 0.45); backdrop-filter: blur(3px); z-index: 2000;
+            display: none; flex-direction: column; justify-content: flex-end;
+            padding: 24px calc(16px + env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+        }
+        .stage3-story-overlay.active { display: flex; }
+
+    </style>
+</head>
+<body id="hull-body">
+
+    <div class="system-nav-bar">
+        <button class="sys-btn" onclick="goBackPreviousStep()"><i class="fa-solid fa-arrow-left"></i> 返回上一頁</button>
+        <button class="sys-btn" onclick="manualSave()"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+        <button class="sys-btn" onclick="manualLoad()"><i class="fa-solid fa-folder-open"></i> 讀取</button>
+        <button class="sys-btn" onclick="clearGameSave()"><i class="fa-solid fa-rotate-left"></i> 重置</button>
+    </div>
+
+    <div id="game-container">
+        <div id="game-bg" class="background-layer bg-ruins"></div>
+        <div id="game-vignette" class="vignette"></div>
+
+        <div id="adventure-screen" class="screen active">
+            <div class="dialogue-box" onclick="handleDialogueBoxClick()">
+                <div id="char-name" class="character-name system">系統</div>
+                <div id="char-text" class="dialogue-text typewriter-cursor"></div>
+                <div id="click-next" class="next-indicator">點擊繼續 <i class="fa-solid fa-caret-right"></i></div>
+            </div>
+        </div>
+
+        <div id="puzzle-screen" class="screen">
+            <div class="puzzle-card-container">
+                <div class="card-header">
+                    <div class="card-header-title" id="card-main-title"><i class="fa-solid fa-cross"></i> 聖保祿石壁暗記探測</div>
+                    <div class="stage-badge" id="card-stage-badge">第 Ⅰ 關</div>
+                </div>
+
+                <div class="manuscript-area">
+                    <h3 id="log-title">鄭一航海日誌</h3>
+                    <p id="log-text"></p>
+                </div>
+
+                <div class="card-viewport">
+                    <div class="stage-container" id="stage1-box">
+                        <div class="hunt-matrix-grid" id="matrix-field"></div>
+                    </div>
+
+                    <div class="stage-container" id="stage2-box">
+                        <div class="facade-frame" id="facade-field">
+                            <div class="slot slot-top" data-sym="🕊️" id="slot-top"></div>
+                            <div class="slot slot-bottom-left" data-sym="🦁" id="slot-bottom-left"></div>
+                            <div class="slot slot-bottom-center" data-sym="⛲" id="slot-bottom-center"></div>
+                            <div class="slot slot-bottom-right" data-sym="💀" id="slot-bottom-right"></div>
+                        </div>
+                    </div>
+
+                    <div class="stage-container" id="stage3-box">
+                        <div class="s3-embedded-layout">
+                            <div class="rules-bar">
+                                <div class="rule-item"><strong>【行 1 翼之律】</strong>畫面中清晰繪有帶羽翼的天使、天神或聖靈 = 1；無 = 0</div>
+                                <div class="rule-item"><strong>【行 2 職之律】</strong>主要人物身穿修會長袍、神職祭袍等宗教全身衣冠 = 1；無 = 0</div>
+                                <div class="rule-item"><strong>【行 3 難之律】</strong>畫面出現十字架、骷髏頭、肉身聖痕或慘烈刑場 = 1；無 = 0</div>
+                            </div>
+
+                            <div class="matrix-scroll">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr><th>律 \ 圖</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr data-row="0"><th>翼</th><td data-col="0">🔍</td><td data-col="1">🔍</td><td data-col="2">🔍</td><td data-col="3">🔍</td><td data-col="4">🔍</td><td data-col="5">🔍</td></tr>
+                                        <tr data-row="1"><th>職</th><td data-col="0">🔍</td><td data-col="1">🔍</td><td data-col="2">🔍</td><td data-col="3">🔍</td><td data-col="4">🔍</td><td data-col="5">🔍</td></tr>
+                                        <tr data-row="2"><th>難</th><td data-col="0">🔍</td><td data-col="1">🔍</td><td data-col="2">🔍</td><td data-col="3">🔍</td><td data-col="4">🔍</td><td data-col="5">🔍</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="input-board-mini">
+                                <div class="input-card-mini" data-col-idx="0"><div class="card-title-mini">圖1</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                                <div class="input-card-mini" data-col-idx="1"><div class="card-title-mini">圖2</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                                <div class="input-card-mini" data-col-idx="2"><div class="card-title-mini">圖3</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                                <div class="input-card-mini" data-col-idx="3"><div class="card-title-mini">圖4</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                                <div class="input-card-mini" data-col-idx="4"><div class="card-title-mini">圖5</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                                <div class="input-card-mini" data-col-idx="5"><div class="card-title-mini">圖6</div><div class="dot-row-mini"><div class="matrix-dot-container" data-row-idx="0"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="1"><div class="matrix-dot status-0"></div></div><div class="matrix-dot-container" data-row-idx="2"><div class="matrix-dot status-0"></div></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-overlay" id="history-popup">
+                        <div class="history-box">
+                            <h4 id="pop-title"></h4>
+                            <p id="pop-desc"></p>
+                            <div class="history-timer" id="pop-timer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="bag-bar" id="bag-row-wrapper">
+                        <span class="bag-label">物資袋:</span>
+                        <div class="bag-slots">
+                            <div class="bag-slot" id="bag-0"></div>
+                            <div class="bag-slot" id="bag-1"></div>
+                            <div class="bag-slot" id="bag-2"></div>
+                            <div class="bag-slot" id="bag-3"></div>
+                        </div>
+                    </div>
+                    <div class="terminal-log-row" id="terminal-text">準備就緒。</div>
+                    <div class="action-buttons">
+                        <button class="btn-card btn-card-secondary" id="btn-left-action">重新校準</button>
+                        <button class="btn-card btn-card-primary" id="btn-right-action" style="opacity: 0.4;">提交結果</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stage3-story-box" class="stage3-story-overlay">
+        <div class="dialogue-box" onclick="handleStage3DialogueClick()">
+            <div id="s3-char-name" class="character-name system">系統</div>
+            <div id="s3-char-text" class="dialogue-text typewriter-cursor"></div>
+            <div id="s3-click-next" class="next-indicator">點擊繼續 <i class="fa-solid fa-caret-right"></i></div>
+        </div>
+    </div>
+
+
+    <script>
+        const script = [
+            { id: 0, name: "系統", text: "深夜，微風穿過聖保祿山丘。你與艾蓮娜避開了遊客，站在巍峨的大三巴牌坊孤壁之下。", bg: "bg-ruins", nameClass: "system" },
+            { id: 1, name: "艾蓮娜", text: "手電筒的光芒照在厚重的石造牌坊上……這座中西合璧的孤壁真的太驚人了，所有的雕刻細節都與鄭一留下的紀錄完美吻合。", bg: "bg-ruins", nameClass: "elena" },
+            { id: 2, name: "主角", text: "快看紀錄，手札中寫道：『夜半風靜，仰觀教士之牆，欲入秘境，必先尋其暗記』。大三巴上的石雕浮雕就是解開第一道機關的鑰匙！", bg: "bg-ruins", nameClass: "mc" },
+            { id: 3, name: "主角", text: "手札日誌中記錄著挖起核心的祕令黑話，我們必須精準地將對應的歷史核心起出，不能觸碰無關物資！", bg: "bg-ruins", nameClass: "mc", triggerPuzzle: true, stage: 1 },
+            
+            { id: 4, name: "系統", text: "【轟隆隆——】四枚核心原石集齊，大三巴牌坊基座下突然傳來巨響！一塊沉重的石板矩陣向地底沉降，隨後露出了內部隱密的地下階梯入口與一座虛線浮雕卡槽牆！", bg: "bg-vault", nameClass: "system" },
+            { id: 5, name: "艾蓮娜", text: "天哪！原來基座下藏著真正的暗艙！這面牆代表大三巴正門框架。那些神聖的浮雕必須在暗艙內物歸原位，才能引導出內部暗藏的經緯。這涉及到了極深的真實教義定位！", bg: "bg-vault", nameClass: "elena" },
+            { id: 6, name: "主角", text: "沒錯。根據鄭一的續篇手札，將剛剛找到的四枚原石依據真實牌坊的層級方位完美還原：『白鴿翔於天頂，最左滴水口放置石獅，同層左側湧泉水，同層右側刻骷髏』！", bg: "bg-vault", nameClass: "mc", triggerPuzzle: true, stage: 2 },
+
+            { id: 7, name: "系統", text: "【咔噠！】四枚原石精準歸位。然而，暗艙核心的青銅大門並未開啟，反而浮現出一道由六根石柱交織而成的西洋宗教星圖鎖，散發著微弱的光芒。", bg: "bg-vault", nameClass: "system" },
+            { id: 8, name: "艾蓮娜", text: "等等……手札這裡有一行不易察覺的炭筆小字：『孤壁石門，需借館內西洋六畫之真形，方能勘破。行一為翼、行二為職、行三為難，誠實判定，方得始終。』", bg: "bg-vault", nameClass: "elena" },
+            { id: 9, name: "主角", text: "館內六畫？指的是後方地下的「大三巴天主教藝術博物館」后室展出那六幅聖畫藏品！看來我們必須進入博物館，核實這六幅畫的實物細節，才能解開這個終極矩陣！", bg: "bg-museum", nameClass: "mc" },
+            { id: 10, name: "主角", text: "事不遲疑，秘密通道就在前方，我們悄悄過去！只要完成『翼、職、難』三律的密碼判定，就能啟動最終的時空共鳴！", bg: "bg-museum", nameClass: "elena", triggerPuzzle: true, stage: 3 },
+
+            { id: 11, name: "系統", text: "【嗡——】隨著天主教藝術博物館的矩陣代碼完美契合，石壁大門上的西洋宗教星圖鎖驟然解封！秘密通道反向傳來震動，提示你們立刻重回大三巴孤壁前！", bg: "bg-ruins", nameClass: "system" },
+            { id: 12, name: "艾蓮娜", text: "快看！大三巴孤壁正後方的石基裂開了！露出的不是金銀財寶，而是一堵古老的青磚老牆！這跟西洋石壁截然不同！", bg: "bg-ruins", nameClass: "elena" },
+            
+            { id: 13, name: "主角", text: "中西同壁，神明共生！海盜將機關的終點與大三巴正後方緊鄰的『哪吒廟』連在了一起！這正是澳門文化奇妙共存的縮影。", bg: "bg-nezha", nameClass: "mc" },
+            { id: 14, name: "主角", text: "歷史線索已經完全接上了。艾蓮娜，我們走，下一站 ── 哪吒廟！", bg: "bg-nezha", nameClass: "mc" }
+        ];
+
+        const stage3Script = [
+            { name: "系統", text: "【咔噠】博物館密碼輸入正確！觀測矩陣與六幅真實館藏畫作達成了完美的物理共鳴！", nameClass: "system" },
+            { name: "艾蓮娜", text: "成功了！快聽，地底通道深處傳來了回音，震源在大三巴孤壁石牆正後方！我們必須立刻返回大三巴地面！", nameClass: "elena" },
+            { name: "主角", text: "秘密機關已經被反向激活，真正的終點浮出水面了，走！", nameClass: "mc" }
+        ];
+        let stage3ScriptIdx = 0;
+
+        const TARGET_SYMBOLS = ['🕊️', '🦁', '⛲', '💀']; 
+        const DISTRACTORS = ['⚓', '⚔️', '🗝️', '📜', '💎', '🏺', '👑', '🧭'];
+
+        // 安全轉義處理 STAGE_TEXTS
+        const STAGE_TEXTS = {
+            1: '「...欲開機關，必須先從雜碎圖騰中，將<span class="code-word">天國之羽</span>、<span class="code-word">守門狻猊</span>、<span class="code-word">永生泉流</span>、與<span class="code-word">不沉之骨</span>四枚原石核心挖出...」',
+            2: '「...欲解其鎖，需借牌坊真形復位：<span class="code-word">天國之羽（🕊️）飛升至穹頂最高處</span>；而底層橫列之中...」',
+            3: '「...孤壁石門，需借館內西洋六畫之真形，方能勘破。依據三律指示，點亮下方對應 1 的指示燈鎖扣。」'
+        };
+
+        const HISTORY_DATA = {
+            '🕊️': { title: '🕊️ 聖靈白鴿與穹頂榮光', desc: '【大三巴歷史】位於牌坊最頂端三角楣核心。銅製白鴿代表天主教中的「聖靈」。' },
+            '🦁': { title: '🦁 守護石獅與中西交融', desc: '【大三巴歷史】位於牌坊底層兩側的洩水管基座。採用了中國傳統的狻猊石獅造型。' },
+            '⛲': { title: '⛲ 生命之泉與聖母水池', desc: '【大三巴歷史】位於牌坊第三層左側。雕刻呈現噴泉與花卉。' },
+            '💀': { title: '💀 骷髏木刻與死亡警示', desc: '【大三巴歷史】位於牌坊第三層右側。在教義中，骷髏警示世人凡塵短暫。' }
+        };
+
+        const CORRECT_MATRIX = [
+            [1, 1, 0, 0, 1, 1],
+            [0, 1, 1, 1, 1, 1],
+            [0, 0, 0, 1, 1, 1]
+        ];
+
+        const INTERPRETATIONS = {
+            "0-0": "【圖1·翼】大天神彌額爾背後擁有一對非常巨大的神聖羽翼 ──► 【1】", "1-0": "【圖1·職】大天神身穿羅馬式鋼鐵戰甲與短裙 ──► 【0】", "2-0": "【圖1·難】畫面雖在驅魔，但無十字架、肉身聖痕等直接受難物 ──► 【0】",
+            "0-1": "【圖2·翼】洗禮盆正後方天空中，站立著一位張開紅色大翅膀的天使 ──► 【1】", "1-1": "【圖2·職】右側施洗的神職人員身穿極其華麗的寬大祭袍 ──► 【1】", "2-1": "【圖2·難】這是神聖平和的新生洗禮儀式，毫無死亡元素 ──► 【0】",
+            "0-2": "【圖3·翼】畫中皆為凡人與神職人員，天空中沒有任何帶翅膀的天使 ──► 【0】", "1-2": "【圖3·職】左側端坐的主教身穿精美禮袍，地上也堆放著宗教修會法衣 ──► 【1】", "2-2": "【圖3·難】此處為宗教職位受職儀式，畫面平和 ──► 【0】",
+            "0-3": "【圖4·翼】聖方濟各正在向飛鳥講道，天空中為普通鳥類 ──► 【0】", "1-3": "【圖4·職】畫中的三位修士皆身穿標準方濟各會的粗布修士長袍 ──► 【1】", "2-3": "【圖4·難】注意細節！聖方濟各張開的雙手與雙腳上有清晰的「受難聖痕」 ──► 【1】",
+            "0-4": "【圖5·翼】耶穌頭部周圍以及天空中，環繞著數個長著翅膀的小天使頭像 ──► 【1】", "1-4": "【圖5·職】前來擁抱耶穌的聖方濟各身穿標準的宗教修士長袍 ──► 【1】", "2-4": "【圖5·難】畫面核心即是耶穌受難十字架，且正下方地面有極其清晰的骷髏頭 ──► 【1】",
+            "0-5": "【圖6·翼】天空中雲層大開，數名長著翅膀的小天使在盤旋準備接引靈魂 ──► 【1】", "1-5": "【圖6·職】被釘在十字架上的日本長崎殉道者皆身穿寬大的修士長袍 ──► 【1】", "2-5": "【圖6·難】這是極其慘烈的集體殉道刑場，海灘上立著密密麻麻的十字架 ──► 【1】"
+        };
+
+        let currentIndex = 0; let currentStage = 1; let inventory = []; let selectedBagSym = null; let placedCount = 0;
+        let popupTimerId = null; let countdownIntervalId = null;     
+        let userMatrix = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]];
+
+        let typewriterTimer = null;
+        let isTyping = false;
+        let currentFullText = "";
+        let targetTextElementId = "";
+
+        let hullBody, terminalText, btnLeft, btnRight, popOverlay, logTextEl, charTextEl, clickNextEl;
+
+        function redirectToNextPage() {
+            window.location.href = "3.html";
+        }
+
+        function saveGameState(isSilent = true) {
+            const gameState = {
+                currentIndex: currentIndex,
+                currentStage: currentStage,
+                userMatrix: userMatrix,
+                activeScreen: document.getElementById('puzzle-screen').classList.contains('active') ? 'puzzle-screen' : 'adventure-screen'
+            };
+            localStorage.setItem('macau_pirate_save', JSON.stringify(gameState));
+            if (!isSilent) {
+                alert("💾 遊戲進度已成功儲存！");
+            }
+        }
+
+        function loadGameState(isSilent = true) {
+            const savedData = localStorage.getItem('macau_pirate_save');
+            if (savedData) {
+                try {
+                    const gameState = JSON.parse(savedData);
+                    currentIndex = gameState.currentIndex || 0;
+                    currentStage = gameState.currentStage || 1;
+                    userMatrix = gameState.userMatrix || [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]];
+                    
+                    if (gameState.activeScreen === 'puzzle-screen') {
+                        changeScreen('puzzle-screen');
+                        initPuzzleContainer();
+                        restoreUserMatrixUI();
+                    } else {
+                        changeScreen('adventure-screen');
+                        if (currentIndex >= script.length) currentIndex = script.length - 1;
+                        renderDialogue();
+                    }
+                    if (!isSilent) alert("📂 成功載入歷史進度！");
+                    return true;
+                } catch (e) {
+                    console.error("讀檔失敗", e);
+                }
+            } else if (!isSilent) {
+                alert("⚠️ 未發現可用的存檔紀錄！");
+            }
+            return false;
+        }
+
+        function manualSave() { saveGameState(false); }
+        function manualLoad() { loadGameState(false); }
+
+        function clearGameSave() {
+            if (confirm("確定要重置所有進度，重新開始遊戲嗎？")) {
+                localStorage.removeItem('macau_pirate_save');
+                currentIndex = 0;
+                currentStage = 1;
+                userMatrix = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]];
+                changeScreen('adventure-screen');
+                renderDialogue();
+            }
+        }
+
+        function goBackPreviousStep() {
+            if (isTyping) { finishTyping(); }
+
+            if (document.getElementById('puzzle-screen').classList.contains('active')) {
+                changeScreen('adventure-screen');
+                if (currentIndex > 0 && script[currentIndex].triggerPuzzle) {
+                    currentIndex--;
+                }
+                renderDialogue();
+                saveGameState();
+                return;
+            }
+
+            if (document.getElementById('stage3-story-box').classList.contains('active')) {
+                document.getElementById('stage3-story-box').classList.remove('active');
+                changeScreen('puzzle-screen');
+                initPuzzleContainer();
+                return;
+            }
+
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderDialogue();
+                saveGameState();
+            } else {
+                alert("已回退至最開始的故事開頭！");
+            }
+        }
+
+        function restoreUserMatrixUI() {
+            if (currentStage !== 3) return;
+            document.querySelectorAll('.input-card-mini').forEach(card => {
+                const colIdx = parseInt(card.getAttribute('data-col-idx'));
+                card.querySelectorAll('.matrix-dot-container').forEach(container => {
+                    const rowIdx = parseInt(container.getAttribute('data-row-idx'));
+                    const dot = container.querySelector('.matrix-dot');
+                    if (userMatrix[rowIdx][colIdx] === 1) {
+                        dot.className = 'matrix-dot status-1';
+                    } else {
+                        dot.className = 'matrix-dot status-0';
+                    }
+                });
+            });
+        }
+
+        function runTypewriter(targetId, text, speed = 25, onComplete = null) {
+            clearInterval(typewriterTimer);
+            isTyping = true;
+            currentFullText = text;
+            targetTextElementId = targetId;
+            if(clickNextEl) clickNextEl.classList.remove('show');
+            
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            el.innerHTML = "";
+            el.classList.add('typewriter-cursor');
+
+            let index = 0;
+            typewriterTimer = setInterval(() => {
+                if (index < text.length) {
+                    el.innerHTML = text.substring(0, index + 1);
+                    index++;
+                } else {
+                    finishTyping(onComplete);
+                }
+            }, speed);
+        }
+
+        function finishTyping(onComplete = null) {
+            clearInterval(typewriterTimer);
+            isTyping = false;
+            const el = document.getElementById(targetTextElementId);
+            if (el) {
+                el.innerHTML = currentFullText;
+                el.classList.remove('typewriter-cursor');
+            }
+            if(clickNextEl) {
+                clickNextEl.classList.add('show');
+                if (currentIndex >= script.length - 1) {
+                    clickNextEl.innerHTML = `點擊進入下一關 (3.html) <i class="fa-solid fa-arrow-right"></i>`;
+                }
+            }
+            saveGameState();
+            if (onComplete) onComplete();
+        }
+
+        function handleDialogueBoxClick() {
+            if (isTyping) { finishTyping(); return; }
+
+            if (currentIndex >= script.length - 1) {
+                redirectToNextPage();
+                return;
+            }
+
+            const node = script[currentIndex];
+            if (node.triggerPuzzle) { 
+                currentStage = node.stage; 
+                changeScreen('puzzle-screen'); 
+                initPuzzleContainer(); 
+                saveGameState();
+                return; 
+            }
+            currentIndex++; 
+            if (currentIndex < script.length) { 
+                renderDialogue(); 
+            } else {
+                redirectToNextPage();
+            }
+        }
+
+        function renderDialogue() {
+            const node = script[currentIndex]; 
+            document.getElementById('game-bg').className = 'background-layer ' + node.bg;
+            const nameEl = document.getElementById('char-name'); 
+            nameEl.textContent = node.name; 
+            nameEl.className = 'character-name ' + node.nameClass;
+            runTypewriter('char-text', node.text);
+        }
+
+        function changeScreen(screenId) { 
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+            document.getElementById(screenId).classList.add('active'); 
+        }
+
+        function initPuzzleContainer() {
+            document.querySelectorAll('.stage-container').forEach(c => c.classList.remove('active'));
+            btnLeft.innerText = "重新校準";
+            btnRight.innerText = "提交結果";
+            btnRight.style.opacity = "0.4"; 
+            document.getElementById('bag-row-wrapper').style.display = "flex";
+
+            if (currentStage === 1) {
+                document.getElementById('game-bg').className = 'background-layer bg-ruins';
+                document.getElementById('card-main-title').innerHTML = `<i class="fa-solid fa-cross"></i> 聖保祿石壁暗記探測`;
+                document.getElementById('card-stage-badge').innerText = "第 Ⅰ 關";
+                document.getElementById('stage1-box').classList.add('active');
+                document.getElementById('log-text').innerHTML = STAGE_TEXTS[1];
+                terminalText.innerText = "【探測模式】請在下方網格中點擊挖起 4 個目標核心原石。";
+
+                inventory = []; clearBagUI();
+                const field = document.getElementById('matrix-field'); field.innerHTML = '';
+                let matrixPool = [...TARGET_SYMBOLS, ...DISTRACTORS]; matrixPool.sort(() => Math.random() - 0.5);
+                matrixPool.forEach(sym => {
+                    const block = document.createElement('div'); block.className = 'matrix-item'; block.innerText = sym;
+                    block.onclick = (e) => { e.stopPropagation(); handleStage1Click(block, sym); }; 
+                    field.appendChild(block);
+                });
+            } 
+            else if (currentStage === 2) {
+                document.getElementById('game-bg').className = 'background-layer bg-vault';
+                document.getElementById('card-main-title').innerHTML = `<i class="fa-solid fa-gopuram"></i> 聖保祿暗艙殘件還原`;
+                document.getElementById('card-stage-badge').innerText = "第 Ⅱ 關";
+                document.getElementById('stage2-box').classList.add('active');
+                document.getElementById('log-text').innerHTML = STAGE_TEXTS[2];
+                terminalText.innerText = "選中下方物資袋中的原石，再點擊中央虛線卡槽復位。";
+
+                selectedBagSym = null; placedCount = 0;
+                for (let i = 0; i < 4; i++) {
+                    const slot = document.getElementById(`bag-${i}`);
+                    slot.innerText = TARGET_SYMBOLS[i]; 
+                    slot.onclick = (e) => {
+                        e.stopPropagation();
+                        if (currentStage !== 2) return;
+                        document.querySelectorAll('.bag-slot').forEach(s => s.classList.remove('selected'));
+                        slot.classList.add('selected'); selectedBagSym = slot.innerText;
+                    };
+                }
+                setupStage2Slots();
+            } 
+            else if (currentStage === 3) {
+                document.getElementById('game-bg').className = 'background-layer bg-museum';
+                document.getElementById('card-main-title').innerHTML = `<i class="fa-solid fa-palette"></i> 藝術博物館觀測律令`;
+                document.getElementById('card-stage-badge').innerText = "第 Ⅲ 關";
+                document.getElementById('stage3-box').classList.add('active');
+                document.getElementById('log-text').innerHTML = STAGE_TEXTS[3];
+                terminalText.innerText = "點擊矩陣🔍查看特徵。點亮下方對應 1 的指示燈。";
+                
+                document.getElementById('bag-row-wrapper').style.display = "none"; 
+                btnRight.style.opacity = "1"; 
+                btnRight.innerText = "驗證矩陣";
+
+                initStage3Logic();
+            }
+        }
+
+        function handleStage1Click(element, sym) {
+            if (currentStage !== 1 || element.classList.contains('found')) return;
+            if (TARGET_SYMBOLS.includes(sym)) {
+                inventory.push(sym); element.classList.add('found');
+                const targetSlot = document.getElementById(`bag-${inventory.length - 1}`); targetSlot.innerText = sym;
+                
+                triggerHistoryPopup(sym);
+                
+                if (inventory.length === TARGET_SYMBOLS.length) { 
+                    terminalText.innerText = "✨ 4 枚核心原石已全部集齊！請點擊右下角「提交結果」。";
+                    btnRight.style.opacity = "1"; 
+                }
+            } else { triggerVibrationFeedback("【磁場共振錯誤】觸碰到無關物資，引發碎石震盪！"); }
+        }
+
+        function triggerHistoryPopup(sym) {
+            if (popupTimerId) clearTimeout(popupTimerId); 
+            if (countdownIntervalId) clearInterval(countdownIntervalId);
+            const data = HISTORY_DATA[sym]; 
+            document.getElementById('pop-title').innerText = data.title; 
+            document.getElementById('pop-desc').innerText = data.desc; 
+            popOverlay.classList.add('show');
+            let secondsLeft = 6; 
+            const timerText = document.getElementById('pop-timer'); 
+            timerText.innerText = `線索將在 ${secondsLeft} 秒後關閉...`;
+            countdownIntervalId = setInterval(() => { 
+                secondsLeft--; 
+                if (secondsLeft > 0) { timerText.innerText = `線索將在 ${secondsLeft} 秒後關閉...`; } 
+            }, 1000);
+            popupTimerId = setTimeout(() => { closePopup(); }, 6000); 
+            popOverlay.onclick = (e) => { e.stopPropagation(); closePopup(); };
+        }
+
+        function closePopup() {
+            if (popupTimerId) { clearTimeout(popupTimerId); popupTimerId = null; }
+            if (countdownIntervalId) { clearInterval(countdownIntervalId); countdownIntervalId = null; }
+            popOverlay.classList.remove('show');
+        }
+
+        function setupStage2Slots() {
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach(slot => {
+                const posClass = Array.from(slot.classList).find(c => c.startsWith('slot-'));
+                slot.className = `${posClass} slot`; slot.innerText = '';
+                slot.onclick = (e) => {
+                    e.stopPropagation();
+                    if (currentStage !== 2) return;
+                    if (!selectedBagSym) { terminalText.innerText = "請先選中物資袋中的一枚印記原石。"; return; }
+                    if (slot.dataset.sym === selectedBagSym) {
+                        const currentSym = selectedBagSym;
+                        slot.innerText = currentSym; slot.classList.add('occupied');
+                        const usedBag = Array.from(document.querySelectorAll('.bag-slot')).find(b => b.innerText === currentSym);
+                        if (usedBag) { usedBag.innerText = ''; usedBag.classList.remove('selected'); }
+                        selectedBagSym = null; placedCount++; 
+                        terminalText.innerText = `【卡槽相應】原石[${currentSym}]已成功復位！`;
+                        if (placedCount === 4) { 
+                            terminalText.innerText = "✨ 真實牌坊結構已完美還原！請點擊右下角「提交結果」。";
+                            btnRight.style.opacity = "1"; 
+                        }
+                    } else { triggerVibrationFeedback("【方位排斥】不符合牌坊的真實浮雕結構！無法嵌入。"); }
+                };
+            });
+        }
+
+        function initStage3Logic() {
+            const cells = document.querySelectorAll('.history-table td');
+            cells.forEach(cell => {
+                cell.onclick = function(e) {
+                    e.stopPropagation();
+                    cells.forEach(c => c.classList.remove('active-cell'));
+                    this.classList.add('active-cell');
+                    const row = this.parentElement.getAttribute('data-row');
+                    const col = this.getAttribute('data-col');
+                    terminalText.innerText = INTERPRETATIONS[`${row}-${col}`] || "請點擊密碼格獲取線索。";
+                };
+            });
+
+            document.querySelectorAll('.matrix-dot').forEach(dot => {
+                dot.onclick = function(e) {
+                    e.stopPropagation();
+                    const container = this.parentElement;
+                    const card = this.closest('.input-card-mini');
+                    const colIdx = parseInt(card.getAttribute('data-col-idx'));
+                    const rowIdx = parseInt(container.getAttribute('data-row-idx'));
+                    if (this.classList.contains('status-0')) {
+                        this.classList.remove('status-0'); this.classList.add('status-1');
+                        userMatrix[rowIdx][colIdx] = 1;
+                    } else {
+                        this.classList.remove('status-1'); this.classList.add('status-0');
+                        userMatrix[rowIdx][colIdx] = 0;
+                    }
+                    container.classList.remove('has-error');
+                    saveGameState();
+                };
+            });
+        }
+
+        function verifyStage3Matrix() {
+            let correctCount = 0;
+            for(let r=0; r<3; r++) {
+                for(let c=0; c<6; c++) {
+                    if(userMatrix[r][c] === CORRECT_MATRIX[r][c]) correctCount++;
+                }
+            }
+            if (correctCount === 18) {
+                document.querySelectorAll('.matrix-dot-container').forEach(el => el.classList.remove('has-error'));
+                terminalText.innerText = "🔓 驗證成功！共鳴密道已開啟！";
+                setTimeout(() => {
+                    document.getElementById('stage3-story-box').classList.add('active');
+                    stage3ScriptIdx = 0;
+                    renderStage3Dialogue();
+                }, 800);
+            } else {
+                let errorsFound = 0;
+                document.querySelectorAll('.matrix-dot-container').forEach(container => {
+                    const card = container.closest('.input-card-mini');
+                    const c = parseInt(card.getAttribute('data-col-idx'));
+                    const r = parseInt(container.getAttribute('data-row-idx'));
+                    if (userMatrix[r][c] !== CORRECT_MATRIX[r][c]) {
+                        container.classList.add('has-error'); errorsFound++;
+                    } else container.classList.remove('has-error');
+                });
+                terminalText.innerText = `❌ 核驗失敗，偵測到 ${errorsFound} 處律令偏離，已標紅。`;
+            }
+        }
+
+        function renderStage3Dialogue() {
+            const node = stage3Script[stage3ScriptIdx];
+            const nameEl = document.getElementById('s3-char-name');
+            nameEl.textContent = node.name; nameEl.className = 'character-name ' + node.nameClass;
+            document.getElementById('s3-click-next').classList.add('show');
+            const s3TextEl = document.getElementById('s3-char-text');
+            s3TextEl.innerHTML = "";
+            s3TextEl.classList.add('typewriter-cursor');
+
+            let index = 0;
+            clearInterval(typewriterTimer);
+            isTyping = true;
+            currentFullText = node.text;
+            targetTextElementId = 's3-char-text';
+
+            typewriterTimer = setInterval(() => {
+                if (index < node.text.length) {
+                    s3TextEl.innerHTML = node.text.substring(0, index + 1);
+                    index++;
+                } else {
+                    clearInterval(typewriterTimer);
+                    isTyping = false;
+                    s3TextEl.classList.remove('typewriter-cursor');
+                    document.getElementById('s3-click-next').classList.add('show');
+                }
+            }, 25);
+        }
+
+        function handleStage3DialogueClick() {
+            if (isTyping) {
+                clearInterval(typewriterTimer);
+                isTyping = false;
+                const el = document.getElementById('s3-char-text');
+                el.innerHTML = currentFullText;
+                el.classList.remove('typewriter-cursor');
+                document.getElementById('s3-click-next').classList.add('show');
+                return;
+            }
+            stage3ScriptIdx++;
+            if (stage3ScriptIdx < stage3Script.length) { renderStage3Dialogue(); } else {
+                document.getElementById('stage3-story-box').classList.remove('active');
+                changeScreen('adventure-screen');
+                currentIndex = 11;
+                renderDialogue();
+                saveGameState();
+            }
+        }
+
+        function triggerVibrationFeedback(msg) { terminalText.innerText = msg; hullBody.classList.add('vibrate-active'); setTimeout(() => { hullBody.classList.remove('vibrate-active'); }, 350); }
+        function clearBagUI() { for (let i = 0; i < 4; i++) { const b = document.getElementById(`bag-${i}`); b.innerText = ''; b.className = 'bag-slot'; b.onclick = null; } }
+        
+        function submitStageResult() {
+            if (currentStage === 1) {
+                if (inventory.length < TARGET_SYMBOLS.length) { terminalText.innerText = "⚠️ 尚未找齊 4 枚核心原石，無法提交！"; return; }
+                closePopup(); isTyping = false; changeScreen('adventure-screen'); currentIndex = 4; renderDialogue();
+            } 
+            else if (currentStage === 2) {
+                if (placedCount < 4) { terminalText.innerText = "⚠️ 尚未將 4 枚原石完全復位，無法提交！"; return; }
+                closePopup(); isTyping = false; changeScreen('adventure-screen'); currentIndex = 7; renderDialogue();
+            } 
+            else if (currentStage === 3) {
+                verifyStage3Matrix();
+            }
+            saveGameState();
+        }
+
+        document.getElementById('btn-right-action').onclick = (e) => { e.stopPropagation(); submitStageResult(); };
+        document.getElementById('btn-left-action').onclick = (e) => { e.stopPropagation(); initPuzzleContainer(); };
+
+        window.onload = () => {
+            hullBody = document.getElementById('hull-body');
+            popOverlay = document.getElementById('history-popup');
+            logTextEl = document.getElementById('log-text'); 
+            charTextEl = document.getElementById('char-text'); 
+            clickNextEl = document.getElementById('click-next');
+            terminalText = document.getElementById('terminal-text');
+            btnLeft = document.getElementById('btn-left-action');
+            btnRight = document.getElementById('btn-right-action');
+            
+            const hasSave = loadGameState(true);
+            if (!hasSave) {
+                renderDialogue();
+            }
+        };
+    </script>
+</body>
+</html>
