@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>卢家大屋 - 三柱地标码</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: "SimSun", "Songti SC", "STSong", serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .scene-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transform: scale(1.08);
+            transition: opacity 2.5s ease-in-out, transform 3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .bg-image.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .vignette-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.85) 90%, #000 100%);
+        }
+
+        /* 顶部标题栏 */
+        .top-title-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 48px;
+            background: linear-gradient(180deg, rgba(40,22,10,0.92) 0%, rgba(40,22,10,0.6) 80%, transparent 100%);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .top-title-text {
+            color: #d4af37;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+        }
+
+        .dialogue-box {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            min-height: 140px;
+            padding: 20px 28px;
+            background: rgba(244, 239, 228, 0.92);
+            border: 1px solid rgba(160, 130, 90, 0.5);
+            border-radius: 4px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(210, 190, 160, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 30;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        .dialogue-box.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .dialogue-box::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 0);
+            background-size: 8px 8px;
+            pointer-events: none;
+            border-radius: 4px;
+        }
+
+        .speaker-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #5a1a1a;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(90, 26, 26, 0.2);
+            padding-bottom: 4px;
+            display: inline-block;
+        }
+
+        .dialogue-text {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #2b2b2b;
+            letter-spacing: 1px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .next-indicator {
+            position: absolute;
+            right: 20px;
+            bottom: 12px;
+            font-size: 0.75rem;
+            color: #8c6d53;
+            opacity: 0;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 0.9; transform: translateY(-3px); }
+        }
+
+        .bottom-action-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bottom-action-container.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .action-hint-text {
+            color: #e8d7be;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        .scroll-trigger-btn {
+            background: linear-gradient(180deg, #6e4223 0%, #3a1d0a 100%);
+            color: #f3e5c8;
+            border: 1px solid #d4af37;
+            border-radius: 4px;
+            padding: 12px 36px;
+            font-size: 1.05rem;
+            font-family: inherit;
+            font-weight: bold;
+            letter-spacing: 3px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-trigger-btn:hover {
+            background: linear-gradient(180deg, #8a542d 0%, #4a260e 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(212, 175, 55, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .scroll-trigger-btn:active {
+            transform: translateY(0);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.78);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-wrapper {
+            position: relative;
+            width: 90%;
+            max-width: 460px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: scaleY(0);
+            transform-origin: center center;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .modal-overlay.active .scroll-wrapper {
+            transform: scaleY(1);
+        }
+
+        .scroll-roller {
+            width: 106%; height: 20px;
+            background: linear-gradient(90deg, #2b1507 0%, #613814 15%, #3d200a 50%, #613814 85%, #2b1507 100%);
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+            position: relative; z-index: 2;
+            flex-shrink: 0;
+        }
+        .scroll-roller::before, .scroll-roller::after {
+            content: ""; position: absolute; top: -3px; width: 14px; height: 26px;
+            background: #b8860b; border-radius: 2px; box-shadow: 0 0 5px rgba(0,0,0,0.6);
+        }
+        .scroll-roller::before { left: -7px; }
+        .scroll-roller::after { right: -7px; }
+
+        .scroll-body {
+            width: 100%;
+            background: #e6d3a7;
+            background-image:
+                radial-gradient(rgba(120, 90, 40, 0.1) 1px, transparent 0),
+                radial-gradient(rgba(60, 40, 10, 0.08) 2px, transparent 0);
+            background-size: 12px 12px, 24px 24px;
+            border-left: 8px solid #8c5d33;
+            border-right: 8px solid #8c5d33;
+            box-shadow: inset 0 0 40px rgba(110, 65, 20, 0.45), 0 10px 30px rgba(0,0,0,0.6);
+            padding: 22px 18px 18px 18px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            max-height: calc(90vh - 40px);
+        }
+
+        .scroll-body::-webkit-scrollbar { width: 4px; }
+        .scroll-body::-webkit-scrollbar-thumb { background: #8c5d33; border-radius: 2px; }
+
+        .scroll-header-cinnabar {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #a82810;
+            margin-bottom: 14px;
+            letter-spacing: 3px;
+            border-bottom: 2px double #a82810;
+            padding-bottom: 6px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .scroll-poem-content {
+            font-size: 0.98rem;
+            line-height: 2;
+            color: #2b1d14;
+            font-weight: 500;
+            letter-spacing: 2px;
+            width: 100%;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .scroll-annotation-box {
+            width: 100%;
+            background: rgba(160, 130, 90, 0.12);
+            border: 1px dashed rgba(120, 80, 40, 0.4);
+            border-radius: 4px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .scroll-annotation-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #7a2212;
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .scroll-annotation-text {
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #4a382a;
+            letter-spacing: 1px;
+        }
+
+        .scroll-close-btn {
+            padding: 8px 28px;
+            background: linear-gradient(180deg, #5c3a21 0%, #3d2312 100%);
+            color: #e8d7be; border: 1px solid #c59b27; border-radius: 4px;
+            font-size: 0.95rem; font-family: inherit; font-weight: bold;
+            letter-spacing: 2px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .scroll-close-btn:hover {
+            background: linear-gradient(180deg, #7c4f2d 0%, #3d200a 100%);
+            color: #fff;
+        }
+
+        /* 木质解谜框 */
+        .wooden-puzzle-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 92%;
+            max-width: 460px;
+            background: linear-gradient(135deg, #3d2314 0%, #241208 50%, #4a2b19 100%);
+            border: 4px solid #8a5a36;
+            border-radius: 8px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), inset 0 0 25px rgba(0, 0, 0, 0.8);
+            padding: 22px 18px 18px 18px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .wooden-puzzle-box.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .wooden-puzzle-box::before {
+            content: "";
+            position: absolute;
+            top: 6px; left: 6px; right: 6px; bottom: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            pointer-events: none;
+            border-radius: 4px;
+        }
+
+        .puzzle-title {
+            color: #d4af37;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .symbols-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        .symbol-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .carved-icon-container {
+            width: 62px;
+            height: 62px;
+            background: radial-gradient(circle, #2b160b 0%, #150904 100%);
+            border: 2px solid #6b4325;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.9), 0 2px 6px rgba(255,255,255,0.05);
+        }
+
+        .carved-icon {
+            font-size: 1.6rem;
+            line-height: 1;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
+        }
+
+        .carved-label {
+            font-size: 0.72rem;
+            color: #c2a688;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .digit-picker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #100703;
+            border: 1px solid #7a5030;
+            border-radius: 4px;
+            padding: 3px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
+        }
+
+        .picker-btn {
+            background: linear-gradient(180deg, #5c3a21 0%, #2b1507 100%);
+            color: #d4af37;
+            border: 1px solid #8a5a36;
+            width: 34px;
+            height: 22px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .picker-btn:hover {
+            background: linear-gradient(180deg, #7c4f2d 0%, #3d200a 100%);
+        }
+        .picker-btn:active {
+            background: linear-gradient(180deg, #3d200a 0%, #5c3a21 100%);
+        }
+
+        .digit-display {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #f3e5c8;
+            font-family: "Courier New", monospace;
+            padding: 2px 0;
+            width: 38px;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+        }
+
+        .puzzle-hint-text {
+            color: #a0a5ab;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            text-align: center;
+            min-height: 18px;
+        }
+
+        .puzzle-hint-text.error {
+            color: #e8705a;
+        }
+
+        .confirm-count-btn {
+            background: linear-gradient(180deg, #8a542d 0%, #4a260e 100%);
+            color: #fdf6e7;
+            border: 1px solid #d4af37;
+            border-radius: 4px;
+            padding: 8px 28px;
+            font-size: 0.98rem;
+            font-family: inherit;
+            font-weight: bold;
+            letter-spacing: 3px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 0 8px rgba(212, 175, 55, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .confirm-count-btn:hover {
+            background: linear-gradient(180deg, #a66738 0%, #5e3113 100%);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .confirm-count-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 抖动动画 */
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            15% { transform: translate(calc(-50% - 6px), -50%) scale(1); }
+            30% { transform: translate(calc(-50% + 6px), -50%) scale(1); }
+            45% { transform: translate(calc(-50% - 5px), -50%) scale(1); }
+            60% { transform: translate(calc(-50% + 5px), -50%) scale(1); }
+            75% { transform: translate(calc(-50% - 3px), -50%) scale(1); }
+        }
+        .wooden-puzzle-box.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes inputShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        .secret-input.shake {
+            animation: inputShake 0.4s ease-in-out;
+        }
+
+        /* 暗码计算区 */
+        .calc-area-box {
+            width: 100%;
+            background: rgba(112, 78, 46, 0.15);
+            border: 1px solid rgba(138, 90, 54, 0.5);
+            border-radius: 4px;
+            padding: 10px 8px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .calc-values {
+            font-size: 0.82rem;
+            color: #5c3a21;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .calc-formula {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #a82810;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .secret-input-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .secret-input {
+            width: 46px;
+            height: 34px;
+            text-align: center;
+            font-size: 1.15rem;
+            font-family: "SimSun", serif;
+            font-weight: bold;
+            color: #2b1d14;
+            background: #fdf8ed;
+            border: 1px solid #a87d4f;
+            border-radius: 3px;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .secret-input:focus {
+            border-color: #a82810;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 0 0 6px rgba(168,40,16,0.4);
+        }
+
+        .submit-word-btn {
+            padding: 6px 14px;
+            background: linear-gradient(180deg, #7c4f2d 0%, #4a260e 100%);
+            color: #f3e5c8;
+            border: 1px solid #d4af37;
+            border-radius: 3px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .submit-word-btn:hover {
+            background: linear-gradient(180deg, #966138 0%, #5e3113 100%);
+            color: #fff;
+        }
+
+        .code-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0 10px 0;
+            font-size: 0.8rem;
+        }
+
+        .code-table th, .code-table td {
+            border: 1px solid #a87d4f;
+            padding: 5px 1px;
+            text-align: center;
+            color: #2b1d14;
+        }
+
+        .code-table th {
+            background: rgba(168, 125, 79, 0.25);
+            font-weight: bold;
+            color: #7a2212;
+        }
+
+        /* 提示文本 */
+        .hint-level-box {
+            width: 100%;
+            background: rgba(168, 40, 16, 0.08);
+            border-left: 3px solid #a82810;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            text-align: left;
+            display: none;
+        }
+        .hint-level-box.show {
+            display: block;
+        }
+        .hint-level-title {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #a82810;
+            margin-bottom: 3px;
+            letter-spacing: 1px;
+        }
+        .hint-level-text {
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: #4a382a;
+            letter-spacing: 0.5px;
+        }
+
+        /* 存档面板 */
+        .game-save-panel {
+            position: absolute;
+            top: 54px;
+            right: 12px;
+            z-index: 500;
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-control-btn {
+            background: linear-gradient(180deg, rgba(92,58,33,0.9) 0%, rgba(43,21,7,0.9) 100%);
+            color: #e8d7be;
+            border: 1px solid #c59b27;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+        }
+
+        .save-control-btn:hover {
+            background: linear-gradient(180deg, #7c4f2d 0%, #3d200a 100%);
+            color: #fff;
+        }
+
+        /* 通关金光效果 */
+        .golden-glow {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 0;
+            background: radial-gradient(circle at center, rgba(255,200,80,0.35) 0%, transparent 60%);
+            transition: opacity 1.5s ease;
+        }
+        .golden-glow.active {
+            opacity: 1;
+        }
+
+        /* 通关卷轴中的地标图片 */
+        .landmark-image-box {
+            width: 100%;
+            margin: 10px 0;
+            border: 3px solid #8c5d33;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .landmark-image-box img {
+            width: 100%;
+            display: block;
+        }
+        .landmark-caption {
+            font-size: 0.78rem;
+            color: #7a2212;
+            text-align: center;
+            margin-top: 4px;
+            letter-spacing: 1px;
+            font-style: italic;
+        }
+    
+        .count-hint-btn {
+            margin-top: 10px;
+            padding: 6px 20px;
+            background: rgba(140, 90, 43, 0.15);
+            border: 1px solid #8c5a2b;
+            border-radius: 20px;
+            color: #8c5a2b;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .count-hint-btn:active { background: rgba(140, 90, 43, 0.3); }
+        .count-hint-text {
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.15);
+            border: 1px dashed #a67c52;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: #e8dcc8;
+            text-align: left;
+            display: none;
+        }
+</style>
+</head>
+<body>
+
+    <div class="scene-container">
+        <div class="game-save-panel">
+            <button class="save-control-btn" id="saveGameBtn">存 檔</button>
+            <button class="save-control-btn" id="loadGameBtn">讀 檔</button>
+        </div>
+
+        <div class="top-title-bar">
+            <div class="top-title-text">謎題三 · 三柱地標碼</div>
+        </div>
+
+        <div class="vignette-overlay"></div>
+        <div class="golden-glow" id="goldenGlow"></div>
+
+        <img src="lujia_4.jpg" alt="卢家大屋门楣雕刻" class="bg-image" id="bgImage4">
+
+        <!-- 对话框 -->
+        <div class="dialogue-box" id="dialogueBox">
+            <div class="speaker-name" id="speakerName"></div>
+            <div class="dialogue-text" id="dialogueText"></div>
+            <div class="next-indicator" id="nextIndicator">▼ 点击继续</div>
+        </div>
+
+        <!-- 底部操作区 -->
+        <div class="bottom-action-container" id="bottomActionBox">
+            <div class="action-hint-text">二道暗码已破，最后一道校验码藏着地标的真名</div>
+            <button class="scroll-trigger-btn" id="openScrollBtn">鄭 一 手 札</button>
+        </div>
+
+        <!-- 郑一手札 仿古卷轴 Modal -->
+        <div class="modal-overlay" id="infoScrollModal">
+            <div class="scroll-wrapper" onclick="event.stopPropagation()">
+                <div class="scroll-roller"></div>
+                <div class="scroll-body">
+                    <div class="scroll-header-cinnabar">三柱地標訣</div>
+
+                    <div class="scroll-poem-content">
+                        門楣三層，各取其數；<br>
+                        蝠為天柱，鳥為人柱；<br>
+                        果為地柱，乘除相合；<br>
+                        得一暗字，便識地標。
+                    </div>
+
+                    <div class="scroll-annotation-box">
+                        <div class="scroll-annotation-title">【旁註小字】</div>
+                        <div class="scroll-annotation-text">
+                            校驗規則：天柱 × 地柱 ÷ 人柱 = 密押數<br><br>
+                            密押數對照當鋪十字暗碼，即為地標暗字。<br><br>
+                            親數親算，不可妄測。
+                        </div>
+                    </div>
+
+                    <button class="scroll-close-btn" id="scrollCloseBtn">開 始 勘 驗</button>
+                </div>
+                <div class="scroll-roller"></div>
+            </div>
+        </div>
+
+        <!-- 门楣雕饰计数 UI -->
+        <div class="wooden-puzzle-box" id="woodenPuzzleBox">
+            <div class="puzzle-title">【 門楣雕飾 · 三柱取數 】</div>
+
+            <div class="symbols-row">
+                <div class="symbol-col">
+                    <div class="carved-icon-container">
+                        <span class="carved-icon">🦇</span>
+                        <span class="carved-label">蝙蝠<br>天柱</span>
+                    </div>
+                    <div class="digit-picker">
+                        <button class="picker-btn" onclick="changeDigit('bat', 1)">▲</button>
+                        <div class="digit-display" id="batDigit">0</div>
+                        <button class="picker-btn" onclick="changeDigit('bat', -1)">▼</button>
+                    </div>
+                </div>
+
+                <div class="symbol-col">
+                    <div class="carved-icon-container">
+                        <span class="carved-icon">🦜</span>
+                        <span class="carved-label">禽鳥<br>人柱</span>
+                    </div>
+                    <div class="digit-picker">
+                        <button class="picker-btn" onclick="changeDigit('bird', 1)">▲</button>
+                        <div class="digit-display" id="birdDigit">0</div>
+                        <button class="picker-btn" onclick="changeDigit('bird', -1)">▼</button>
+                    </div>
+                </div>
+
+                <div class="symbol-col">
+                    <div class="carved-icon-container">
+                        <span class="carved-icon">🍑</span>
+                        <span class="carved-label">果實<br>地柱</span>
+                    </div>
+                    <div class="digit-picker">
+                        <button class="picker-btn" onclick="changeDigit('fruit', 1)">▲</button>
+                        <div class="digit-display" id="fruitDigit">0</div>
+                        <button class="picker-btn" onclick="changeDigit('fruit', -1)">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="puzzle-hint-text" id="puzzleHint">对照真实门楣，数清每一层纹样数量</div>
+
+            <button class="confirm-count-btn" id="confirmCountBtn">確 認 計 數</button>
+            <div class="count-hint-btn" id="countHintBtn" onclick="showCountHint()">💡 提示</div>
+            <div class="count-hint-text" id="countHintText"></div>
+        </div>
+
+        <!-- 暗码对照表与运算解密 Modal -->
+        <div class="modal-overlay" id="codeTableModal">
+            <div class="scroll-wrapper" onclick="event.stopPropagation()">
+                <div class="scroll-roller"></div>
+                <div class="scroll-body">
+                    <div class="scroll-header-cinnabar">當鋪十字暗碼</div>
+
+                    <!-- 动态运算区 -->
+                    <div class="calc-area-box">
+                        <div class="calc-values" id="calcValuesDisplay">
+                            天柱(蝙蝠): 2 | 人柱(禽鸟): 2 | 地柱(果实): 3
+                        </div>
+                        <div class="calc-formula" id="calcFormulaDisplay">
+                            2 × 3 ÷ 2 = 3
+                        </div>
+                        <div class="secret-input-row">
+                            <input type="text" class="secret-input" id="wordInput" maxlength="1" placeholder="字">
+                            <button class="submit-word-btn" id="submitWordBtn">提交暗字</button>
+                        </div>
+                    </div>
+
+                    <!-- 三级提示 -->
+                    <div class="hint-level-box" id="hintLevel1">
+                        <div class="hint-level-title">【一級提示】</div>
+                        <div class="hint-level-text">蝙蝠为天柱，禽鸟为人柱，果实为地柱，莫搞混层级。</div>
+                    </div>
+                    <div class="hint-level-box" id="hintLevel2">
+                        <div class="hint-level-title">【二級提示】</div>
+                        <div class="hint-level-text">先乘后除，取整数结果，对应暗码表的序位。</div>
+                    </div>
+                    <div class="hint-level-box" id="hintLevel3">
+                        <div class="hint-level-title">【三級提示】</div>
+                        <div class="hint-level-text">暗字为「王」，对应澳门一处知名教堂。</div>
+                    </div>
+
+                    <!-- 当铺十字暗码对照表 (1-10) 正确顺序：由中人工大王夫井羊非 -->
+                    <table class="code-table">
+                        <thead>
+                            <tr>
+                                <th>密押數</th>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                                <th>6</th>
+                                <th>7</th>
+                                <th>8</th>
+                                <th>9</th>
+                                <th>10</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>暗碼字</strong></td>
+                                <td>由</td>
+                                <td>中</td>
+                                <td>王</td>
+                                <td>工</td>
+                                <td>大</td>
+                                <td>人</td>
+                                <td>夫</td>
+                                <td>井</td>
+                                <td>羊</td>
+                                <td>非</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <button class="scroll-close-btn" id="exitModalBtn" style="margin-top: 4px;">返 回 計 數</button>
+                </div>
+                <div class="scroll-roller"></div>
+            </div>
+        </div>
+
+        <!-- 通关卷轴：指向主座教堂 -->
+        <div class="modal-overlay" id="successModal">
+            <div class="scroll-wrapper" onclick="event.stopPropagation()">
+                <div class="scroll-roller"></div>
+                <div class="scroll-body">
+                    <div class="scroll-header-cinnabar">地 標 顯 形</div>
+
+                    <div class="scroll-poem-content" style="color:#a82810; font-size:1.1rem;">
+                        三柱校驗完畢<br>
+                        密押暗字：<strong style="font-size:1.4rem;">王</strong>
+                    </div>
+
+                    <div class="scroll-annotation-box">
+                        <div class="scroll-annotation-title">【暗語解讀】</div>
+                        <div class="scroll-annotation-text">
+                            紅旗幫暗語有云：「王者為堂，堂前接貨」。<br><br>
+                            此字對應澳門城核心的<strong>主座教堂（大堂）</strong>，那裡便是鄭一寶藏從陸路轉海路的核心中轉點。<br><br>
+                            前往大堂前地，找尋下一段痕跡。
+                        </div>
+                    </div>
+
+                    <div class="landmark-image-box">
+                        <img src="cathedral.jpg" alt="澳门主座教堂" onerror="this.style.display='none';this.nextElementSibling.style.display='none';">
+                        <div class="landmark-caption">澳门主座教堂 · 大堂前地</div>
+                    </div>
+
+                    <div class="scroll-annotation-box">
+                        <div class="scroll-annotation-title">【歷史秘檔 · 三柱校驗法】</div>
+                        <div class="scroll-annotation-text">
+                            三柱校驗法源自清代山西票號的密押制度，以天、人、地三組數字運算得出校驗字，用於防範偽造匯票。這套體系隨晉商南下傳入嶺南，被粵商銀號、當鋪廣泛沿用。<br><br>
+                            鄭一將其改造為暗哨驗證規則，把三組數字藏在門楣灰塑的吉祥紋樣中：蝙蝠對應天柱、禽鳥對應人柱、果實對應地柱，既符合傳統吉祥寓意，又具極強的隱蔽性。<br><br>
+                            主座教堂地處澳門城核心，由葡人管轄，官府勢力難以深入，周邊商行客棧密集，是絕佳的情報與貨物中轉點。紅旗幫以「王」字作為此地暗記，取「王者之堂、公開隱蔽」之意——越醒目的地標，越不容易被懷疑。
+                        </div>
+                    </div>
+
+                    <button class="scroll-close-btn" id="successCloseBtn">前 往 下 一 處</button>
+                </div>
+                <div class="scroll-roller"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ========== 剧情对话 ==========
+        const dialogues = [
+            { speaker: "主角", text: "看，这就是屏风后侧厅门楣上的砖雕与木刻。若不是刚才解开了哨点讯道，绝不会注意到这其中的古怪。" },
+            { speaker: "艾莲娜", text: "这些花纹极其精致，但线条似乎组合成了某种特殊的符号……" },
+            { speaker: "主角", text: "郑一手札里写过，红旗帮暗哨向来以「三柱验真伪」。天、人、地三数相合，方得真实地标暗字。" },
+            { speaker: "艾莲娜", text: "三柱？是指这门楣上的蝙蝠、禽鸟和果实吗？" },
+            { speaker: "主角", text: "正是。蝙蝠为天柱，禽鸟为人柱，果实为地柱。数清每一样的数量，按「天柱 × 地柱 ÷ 人柱」算出密押数，再对照当铺十字暗码……" },
+            { speaker: "艾莲娜", text: "就能得到下一处宝藏中转点的名字。这道门楣，就是最后一道验证关。" },
+            { speaker: "主角", text: "亲手数一数，算一算。亲数亲算，不可妄测。" }
+        ];
+
+        let currentLine = 0;
+        let currentChar = 0;
+        let isTyping = false;
+        let timer = null;
+        const printSpeed = 38;
+
+        // ========== 谜题数据 ==========
+        const digits = { bat: 0, bird: 0, fruit: 0 };
+        // 正确答案：天柱(蝙蝠)=2, 人柱(禽鸟)=2, 地柱(果实)=3
+        // 运算：2 × 3 ÷ 2 = 3 → 暗码第3位 = 王
+        const targetAnswers = { bat: 2, bird: 2, fruit: 3 };
+        const correctSecretWord = "王";
+
+        // 错误计数（用于三级提示）
+        let wordErrorCount = 0;
+
+        // ========== DOM 引用 ==========
+        const speakerNameEl = document.getElementById("speakerName");
+        const dialogueTextEl = document.getElementById("dialogueText");
+        const nextIndicatorEl = document.getElementById("nextIndicator");
+        const dialogueBox = document.getElementById("dialogueBox");
+        const bgImage4 = document.getElementById("bgImage4");
+        const bottomActionBox = document.getElementById("bottomActionBox");
+        const infoScrollModal = document.getElementById("infoScrollModal");
+        const woodenPuzzleBox = document.getElementById("woodenPuzzleBox");
+        const codeTableModal = document.getElementById("codeTableModal");
+        const successModal = document.getElementById("successModal");
+        const goldenGlow = document.getElementById("goldenGlow");
+
+        const openScrollBtn = document.getElementById("openScrollBtn");
+        const scrollCloseBtn = document.getElementById("scrollCloseBtn");
+        const confirmCountBtn = document.getElementById("confirmCountBtn");
+        const submitWordBtn = document.getElementById("submitWordBtn");
+        const wordInput = document.getElementById("wordInput");
+        const exitModalBtn = document.getElementById("exitModalBtn");
+        const successCloseBtn = document.getElementById("successCloseBtn");
+        const saveGameBtn = document.getElementById("saveGameBtn");
+        const loadGameBtn = document.getElementById("loadGameBtn");
+        const puzzleHint = document.getElementById("puzzleHint");
+
+        const calcValuesDisplay = document.getElementById("calcValuesDisplay");
+        const calcFormulaDisplay = document.getElementById("calcFormulaDisplay");
+
+        // ========== 震动反馈 ==========
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(pattern); } catch(e) {}
+            }
+        }
+
+        // ========== 音效 ==========
+        function playSound(freq, duration, type) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type || 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playUnlockSound() {
+            playSound(523.25, 0.2);
+            setTimeout(() => playSound(659.25, 0.2), 150);
+            setTimeout(() => playSound(783.99, 0.45), 300);
+        }
+
+        function playErrorSound() {
+            playSound(180, 0.2, 'sawtooth');
+            setTimeout(() => playSound(140, 0.25, 'sawtooth'), 120);
+        }
+
+        function playClickSound() {
+            playSound(420, 0.06, 'square');
+        }
+
+        // ========== 打字机对话 ==========
+        function showDialogue(index) {
+            if (index >= dialogues.length) {
+                finishDialogues();
+                return;
+            }
+            const line = dialogues[index];
+            speakerNameEl.textContent = line.speaker;
+            dialogueTextEl.textContent = "";
+            currentChar = 0;
+            isTyping = true;
+            nextIndicatorEl.style.opacity = "0";
+
+            clearInterval(timer);
+            timer = setInterval(() => {
+                if (currentChar < line.text.length) {
+                    dialogueTextEl.textContent += line.text.charAt(currentChar);
+                    currentChar++;
+                } else {
+                    completeTyping();
+                }
+            }, printSpeed);
+        }
+
+        function completeTyping() {
+            clearInterval(timer);
+            dialogueTextEl.textContent = dialogues[currentLine].text;
+            isTyping = false;
+            nextIndicatorEl.style.opacity = "1";
+        }
+
+        function finishDialogues() {
+            dialogueBox.classList.remove("visible");
+            setTimeout(() => {
+                bottomActionBox.classList.add("visible");
+            }, 500);
+        }
+
+        dialogueBox.addEventListener("click", () => {
+            if (isTyping) {
+                completeTyping();
+            } else {
+                currentLine++;
+                showDialogue(currentLine);
+            }
+        });
+
+        // ========== 手札卷轴 ==========
+        openScrollBtn.addEventListener("click", () => {
+            playClickSound();
+            infoScrollModal.classList.add("active");
+        });
+
+        scrollCloseBtn.addEventListener("click", () => {
+            playClickSound();
+            infoScrollModal.classList.remove("active");
+            bottomActionBox.classList.remove("visible");
+
+            setTimeout(() => {
+                woodenPuzzleBox.classList.add("visible");
+            }, 400);
+        });
+
+        // ========== 数字选择器 ==========
+        function changeDigit(type, delta) {
+            digits[type] = (digits[type] + delta + 10) % 10;
+            document.getElementById(type + "Digit").textContent = digits[type];
+            playSound(320, 0.05, 'square');
+            vibrate(10);
+            // 清除错误提示
+            puzzleHint.classList.remove("error");
+            puzzleHint.textContent = "对照真实门楣，数清每一层纹样数量";
+        }
+
+        // ========== 更新计算区 ==========
+        function updateCalcDisplay() {
+            const tian = digits.bat;
+            const ren = digits.bird;
+            const di = digits.fruit;
+
+            calcValuesDisplay.textContent = `天柱(蝙蝠): ${tian} | 人柱(禽鸟): ${ren} | 地柱(果实): ${di}`;
+
+            if (ren !== 0) {
+                const res = (tian * di) / ren;
+                const formattedRes = Number.isInteger(res) ? res : res.toFixed(1);
+                calcFormulaDisplay.textContent = `${tian} × ${di} ÷ ${ren} = ${formattedRes}`;
+            } else {
+                calcFormulaDisplay.textContent = `${tian} × ${di} ÷ 0 = 无效`;
+            }
+        }
+
+        // ========== 确认计数 ==========
+        confirmCountBtn.addEventListener("click", () => {
+            if (digits.bat === targetAnswers.bat &&
+                digits.bird === targetAnswers.bird &&
+                digits.fruit === targetAnswers.fruit) {
+
+                playUnlockSound();
+                vibrate([30, 50, 30, 50, 60]);
+                updateCalcDisplay();
+                woodenPuzzleBox.classList.remove("visible");
+                setTimeout(() => {
+                    codeTableModal.classList.add("active");
+                }, 300);
+            } else {
+                playErrorSound();
+                vibrate([80, 40, 80]);
+                woodenPuzzleBox.classList.add("shake");
+                puzzleHint.classList.add("error");
+                puzzleHint.textContent = "三柱数目不符，请再对照门楣核实";
+                setTimeout(() => {
+                    woodenPuzzleBox.classList.remove("shake");
+                }, 500);
+            }
+        });
+
+        // ========== 提交暗字 ==========
+        submitWordBtn.addEventListener("click", () => {
+            const entered = wordInput.value.trim();
+            if (!entered) {
+                playErrorSound();
+                vibrate(50);
+                wordInput.classList.add("shake");
+                setTimeout(() => wordInput.classList.remove("shake"), 400);
+                return;
+            }
+
+            if (entered === correctSecretWord) {
+                // 通关
+                playUnlockSound();
+                vibrate([50, 30, 50, 30, 100]);
+                codeTableModal.classList.remove("active");
+                goldenGlow.classList.add("active");
+
+                setTimeout(() => {
+                    successModal.classList.add("active");
+                }, 800);
+            } else {
+                // 错误
+                wordErrorCount++;
+                playErrorSound();
+                vibrate([100, 50, 100]);
+                wordInput.classList.add("shake");
+                wordInput.value = "";
+                setTimeout(() => wordInput.classList.remove("shake"), 400);
+
+                // 解锁三级提示
+                if (wordErrorCount >= 1) {
+                    document.getElementById("hintLevel1").classList.add("show");
+                }
+                if (wordErrorCount >= 2) {
+                    document.getElementById("hintLevel2").classList.add("show");
+                }
+                if (wordErrorCount >= 3) {
+                    document.getElementById("hintLevel3").classList.add("show");
+                }
+            }
+        });
+
+        // 回车提交
+        wordInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                submitWordBtn.click();
+            }
+        });
+
+        // ========== 返回计数 ==========
+        exitModalBtn.addEventListener("click", () => {
+            playClickSound();
+            codeTableModal.classList.remove("active");
+            setTimeout(() => {
+                woodenPuzzleBox.classList.add("visible");
+            }, 300);
+        });
+
+        // ========== 通关关闭 ==========
+        successCloseBtn.addEventListener("click", () => {
+            playClickSound();
+            vibrate(20);
+            window.location.href = "7.html";
+        });
+
+        // ========== 存档 ==========
+        saveGameBtn.addEventListener("click", () => {
+            const gameState = {
+                page: "6.html",
+                currentLine: currentLine,
+                isFinished: bottomActionBox.classList.contains("visible"),
+                isPuzzleVisible: woodenPuzzleBox.classList.contains("visible"),
+                isCodeTableActive: codeTableModal.classList.contains("active"),
+                isSuccess: successModal.classList.contains("active"),
+                digits: digits,
+                wordErrorCount: wordErrorCount
+            };
+            localStorage.setItem("lujia_game_save_6", JSON.stringify(gameState));
+            playClickSound();
+            vibrate(20);
+        });
+
+        loadGameBtn.addEventListener("click", () => {
+            const savedData = localStorage.getItem("lujia_game_save_6");
+            if (!savedData) return;
+            const gameState = JSON.parse(savedData);
+            currentLine = gameState.currentLine;
+            wordErrorCount = gameState.wordErrorCount || 0;
+
+            if (gameState.digits) {
+                digits.bat = gameState.digits.bat;
+                digits.bird = gameState.digits.bird;
+                digits.fruit = gameState.digits.fruit;
+                document.getElementById("batDigit").textContent = digits.bat;
+                document.getElementById("birdDigit").textContent = digits.bird;
+                document.getElementById("fruitDigit").textContent = digits.fruit;
+            }
+
+            // 恢复提示等级
+            if (wordErrorCount >= 1) document.getElementById("hintLevel1").classList.add("show");
+            if (wordErrorCount >= 2) document.getElementById("hintLevel2").classList.add("show");
+            if (wordErrorCount >= 3) document.getElementById("hintLevel3").classList.add("show");
+
+            playClickSound();
+
+            if (gameState.isSuccess) {
+                dialogueBox.classList.remove("visible");
+                bottomActionBox.classList.remove("visible");
+                woodenPuzzleBox.classList.remove("visible");
+                codeTableModal.classList.remove("active");
+                goldenGlow.classList.add("active");
+                successModal.classList.add("active");
+            } else if (gameState.isCodeTableActive) {
+                woodenPuzzleBox.classList.remove("visible");
+                dialogueBox.classList.remove("visible");
+                bottomActionBox.classList.remove("visible");
+                updateCalcDisplay();
+                codeTableModal.classList.add("active");
+            } else if (gameState.isPuzzleVisible) {
+                dialogueBox.classList.remove("visible");
+                bottomActionBox.classList.remove("visible");
+                codeTableModal.classList.remove("active");
+                woodenPuzzleBox.classList.add("visible");
+            } else if (gameState.isFinished) {
+                dialogueBox.classList.remove("visible");
+                woodenPuzzleBox.classList.remove("visible");
+                codeTableModal.classList.remove("active");
+                bottomActionBox.classList.add("visible");
+            } else {
+                woodenPuzzleBox.classList.remove("visible");
+                bottomActionBox.classList.remove("visible");
+                codeTableModal.classList.remove("active");
+                dialogueBox.classList.add("visible");
+                showDialogue(currentLine);
+            }
+        });
+
+        // ========== 初始化 ==========
+        window.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                bgImage4.classList.add("active");
+            }, 200);
+
+            setTimeout(() => {
+                dialogueBox.classList.add("visible");
+                showDialogue(0);
+            }, 2800);
+        });
+    
+        let countHintLevel = 0;
+        const countHints = [
+            "先從現場找到與此處一模一樣的門楣，抬頭觀察真實灰塑上的蝙蝠、禽鳥和果實，不要只憑想像。",
+            "門楣裝飾是左右對稱的：蝙蝠和禽鳥各在左右兩側，果實掛在中央層。數清楚每一側各有幾隻/幾顆。",
+            "蝙蝠 2 隻、禽鳥 2 隻、果實 3 顆。天柱=2，人柱=2，地柱=3。"
+        ];
+        function showCountHint() {
+            const el = document.getElementById('countHintText');
+            if (countHintLevel < countHints.length) {
+                el.style.display = 'block';
+                el.innerText = '💡 提示 ' + (countHintLevel + 1) + '：' + countHints[countHintLevel];
+                countHintLevel++;
+            }
+        }
+</script>
+</body>
+</html>
