@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>謎題四 · 祭台桌之謎</title>
+<style>
+/* 側堂謎題 CSS */
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#000;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+#game{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+  overflow:hidden;
+}
+
+/* 背景圖 */
+.bg-layer{
+  position:absolute;inset:0;z-index:1;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  opacity:0;transition:opacity 1s ease;
+}
+.bg-layer.show{opacity:1}
+.bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 25%,transparent 55%,rgba(0,0,0,.55) 100%);
+}
+
+/* 暗角 */
+.vignette{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  box-shadow:inset 0 0 120px rgba(0,0,0,.5);
+}
+
+/* 頂部標題欄 */
+.top-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding-top:env(safe-area-inset-top,0px);
+  background:linear-gradient(180deg,rgba(74,44,23,.95) 0%,rgba(92,58,30,.85) 100%);
+  border-bottom:2px solid #c9a96e;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:12px;padding-right:12px;
+  height:calc(48px + env(safe-area-inset-top,0px));
+  opacity:0;transition:opacity .6s ease;
+}
+.top-bar.show{opacity:1}
+.top-bar .back-btn{
+  background:none;border:none;color:#c9a96e;font-size:14px;cursor:pointer;
+  padding:6px 10px;letter-spacing:1px;
+}
+.top-bar .title-text{
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:4px;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.top-bar .spacer{width:48px;}
+
+/* 對話框 */
+.dialog-box{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  left:14px;right:14px;z-index:40;
+  background:rgba(245,240,232,.96);
+  border:2px solid #8b5a2b;
+  border-radius:8px;
+  padding:14px 16px 18px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3);
+  opacity:0;transform:translateY(20px);
+  transition:opacity .5s ease, transform .5s ease;
+  pointer-events:none;
+}
+.dialog-box.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.speaker-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.speaker-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.speaker-dot.elena{background:#7a4a6a}
+.speaker-dot.zhujiao{background:#2a5a6b}
+.speaker-name{
+  font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.speaker-name.elena{color:#7a4a6a}
+.speaker-name.zhujiao{color:#2a5a6b}
+.dialog-text{
+  color:#2a1810;font-size:15px;line-height:1.7;
+  min-height:52px;
+}
+.dialog-cursor{
+  display:inline-block;width:2px;height:16px;background:#5c3a1e;
+  animation:cursorBlink .7s step-end infinite;vertical-align:middle;margin-left:2px;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.dialog-hint{
+  position:absolute;bottom:6px;right:14px;
+  color:#8b7a5a;font-size:12px;letter-spacing:1px;
+  animation:hintBlink 1.2s ease-in-out infinite;
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* 轉場遮罩 */
+.transition-overlay{
+  position:absolute;inset:0;z-index:50;background:#000;
+  opacity:0;transition:opacity .8s ease;pointer-events:none;
+}
+.transition-overlay.darken{opacity:1}
+.transition-overlay.fade-out{opacity:0}
+
+/* Toast */
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+
+/* 選擇菜單（象徵七徵） */
+.choice-menu{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  left:14px;right:14px;z-index:15;
+  background:linear-gradient(180deg,rgba(74,44,23,.97) 0%,rgba(58,34,18,.97) 100%);
+  border:2px solid #c9a96e;border-radius:8px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1);
+  padding:0;
+  opacity:0;transform:translateY(30px);
+  transition:opacity .5s ease, transform .5s ease;
+  max-height:60vh;overflow-y:auto;
+}
+.choice-menu.show{opacity:1;transform:translateY(0)}
+.choice-title{
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border-bottom:1px solid #c9a96e;
+  padding:10px 16px;
+  color:#f0e6d2;font-size:14px;font-weight:700;
+  letter-spacing:4px;text-align:center;
+  position:sticky;top:0;z-index:1;
+}
+.choice-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  border-bottom:1px solid rgba(201,169,110,.2);
+  color:#d4c4a0;font-size:14px;
+  cursor:pointer;letter-spacing:1px;
+  transition:background .15s ease;
+}
+.choice-item:last-child{border-bottom:none}
+.choice-item:active{background:rgba(201,169,110,.15)}
+.choice-item .num{
+  color:#c9a96e;font-weight:700;min-width:20px;
+}
+.choice-item .check{
+  margin-left:auto;color:#6b8b3a;font-size:16px;
+  opacity:0;transition:opacity .3s ease;
+}
+.choice-item.observed .check{opacity:1}
+.choice-item.observed{color:#8a7a60;opacity:.6}
+
+/* 線索推理板 */
+.reasoning-panel{
+  position:absolute;inset:0;z-index:30;
+  background:rgba(20,12,6,.96);
+  display:flex;flex-direction:column;align-items:center;
+  padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px) 16px;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s ease;
+  overflow-y:auto;
+}
+.reasoning-panel.show{opacity:1;pointer-events:auto}
+.reasoning-title{
+  color:#c9a96e;font-size:16px;font-weight:700;
+  letter-spacing:6px;margin:24px 0 8px;text-align:center;
+}
+.reasoning-sub{
+  color:#8a7a60;font-size:12px;letter-spacing:2px;margin-bottom:20px;text-align:center;
+}
+.reasoning-cards{
+  display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;
+}
+.rcard{
+  background:linear-gradient(180deg,rgba(74,44,23,.9),rgba(58,34,18,.9));
+  border:1.5px solid #c9a96e;border-radius:8px;
+  padding:14px 16px;cursor:pointer;
+  transition:all .3s ease;
+}
+.rcard:active{transform:scale(.97)}
+.rcard.opened{border-color:#e8c97a;box-shadow:0 0 16px rgba(201,169,110,.3)}
+.rcard-head{
+  display:flex;align-items:center;gap:8px;
+  color:#d4c4a0;font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.rcard-head .ricon{color:#c9a96e;font-size:16px}
+.rcard-desc{
+  color:#a89878;font-size:12px;line-height:1.6;margin-top:6px;
+  max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .4s ease;
+  opacity:0;
+}
+.rcard.opened .rcard-desc{max-height:100px;opacity:1}
+.reasoning-arrow{
+  color:#c9a96e;font-size:20px;text-align:center;margin:4px 0;
+}
+.reasoning-question{
+  width:100%;max-width:340px;
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border:2px solid #c9a96e;border-radius:8px;
+  padding:16px;text-align:center;margin-top:16px;
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:2px;
+}
+.reasoning-choices{
+  display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:14px;
+}
+.rchoice{
+  background:rgba(74,44,23,.85);
+  border:1.5px solid rgba(201,169,110,.4);
+  border-radius:6px;padding:12px 16px;
+  color:#d4c4a0;font-size:14px;cursor:pointer;
+  letter-spacing:1px;text-align:center;
+  transition:all .2s ease;
+}
+.rchoice:active{background:rgba(201,169,110,.2)}
+.rchoice.correct{
+  border-color:#6b8b3a;background:rgba(107,139,58,.25);
+  color:#a8d07a;
+}
+.rchoice.wrong{
+  border-color:#8b3a3a;background:rgba(139,58,58,.25);
+  color:#d07a7a;
+}
+.reasoning-result{
+  color:#a8d07a;font-size:14px;text-align:center;margin-top:14px;
+  letter-spacing:1px;display:none;
+}
+.reasoning-result.show{display:block;animation:hintBlink 1.2s ease-in-out infinite}
+.press-btn-overlay{position:absolute;top:55%;left:0;right:0;display:flex;justify-content:center;z-index:25;opacity:0;transition:opacity .4s ease;pointer-events:none;transform:translateY(-50%)}
+.press-btn-overlay.show{opacity:1;pointer-events:auto}
+.press-btn{background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;padding:14px 36px;border-radius:30px;font-size:16px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,.4);border:1px solid rgba(255,220,150,.4);animation:pressPulse 2s ease-in-out infinite}
+@keyframes pressPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.box-modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center}
+.box-modal.show{display:flex}
+.box-modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.7);opacity:0;transition:opacity .4s}
+.box-modal.show .box-modal-mask{opacity:1}
+.box-modal-panel{position:relative;width:88%;max-width:420px;background:linear-gradient(145deg,#3d2b1f,#2a1d14);border:1px solid rgba(180,140,80,.4);border-radius:14px;padding:24px 20px;z-index:1;transform:scale(.8);opacity:0;transition:all .4s cubic-bezier(.2,1.4,.5,1)}
+.box-modal.show .box-modal-panel{transform:scale(1);opacity:1}
+.box-title{text-align:center;color:#d4a857;font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:2px}
+.box-art{display:flex;flex-direction:column;align-items:center;gap:14px}
+.wooden-box{width:120px;height:80px;position:relative}
+.wooden-box .box-lid{position:absolute;top:0;left:0;right:0;height:28px;background:linear-gradient(180deg,#5a3e28,#3d2b1f);border:1px solid #2a1d14;border-radius:6px 6px 0 0}
+.wooden-box .box-body{position:absolute;bottom:0;left:8px;right:8px;height:52px;background:linear-gradient(180deg,#4a3524,#2e2015);border:1px solid #2a1d14;border-radius:0 0 6px 6px;display:flex;align-items:center;justify-content:center}
+.wooden-box .box-body::after{content:"🔒";font-size:20px}
+.paper-note{width:100%;background:#f5e6c8;border-radius:6px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.3);font-family:serimeter;position:relative}
+.paper-note::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:rgba(139,90,43,.2)}
+.note-title{text-align:center;color:#5a3e28;font-size:16px;font-weight:700;margin-bottom:10px;letter-spacing:4px}
+.note-poem{color:#3d2b1f;font-size:14px;line-height:1.9;text-align:center;letter-spacing:2px}
+.box-hint{text-align:center;color:#8a7a60;font-size:12px;margin-top:14px;font-style:italic}
+.box-close-btn{display:block;margin:14px auto 0;background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;border:none;padding:10px 28px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer}
+.box-modal-mask{
+  position:absolute;inset:0;background:rgba(0,0,0,.75);
+  opacity:0;transition:opacity .4s;
+}
+.box-modal-panel{
+  position:relative;display:flex;flex-direction:column;align-items:center;z-index:1;
+  transform:scale(.8);opacity:0;
+  transition:all .4s cubic-bezier(.2,1.4,.5,1);
+}
+.box-title{
+  color:#d4a857;font-size:16px;font-weight:700;
+  margin-bottom:16px;letter-spacing:4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);
+}
+.box-img{
+  width:220px;height:220px;object-fit:cover;border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6), 0 0 0 2px rgba(180,140,80,.3);
+}
+.view-note-btn{
+  margin-top:14px;
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:none;padding:12px 32px;
+  border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 15px rgba(0,0,0,.4);
+  border:1px solid rgba(255,220,150,.4);
+}
+.paper-detail{
+  position:absolute;inset:0;z-index:35;
+  display:none;align-items:center;justify-content:center;
+}
+.paper-detail.show{display:flex}
+.paper-detail-mask{
+  position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:1;
+}
+.paper-detail-panel{
+  position:relative;z-index:2;width:88%;max-width:380px;
+  background:linear-gradient(145deg,#f5e6c8,#e8d5a8);
+  border:2px solid #b8956a;border-radius:6px;
+  padding:28px 24px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+.note-title{
+  text-align:center;color:#5a3e28;font-size:18px;font-weight:700;
+  margin-bottom:14px;letter-spacing:6px;
+}
+.note-poem{
+  color:#3d2b1f;font-size:15px;line-height:2.0;
+  text-align:center;letter-spacing:3px;
+}
+.note-back{
+  margin-top:18px;padding-top:14px;
+  border-top:1px dashed rgba(139,90,43,.4);
+  text-align:center;color:#8b6914;font-size:13px;
+  line-height:1.8;font-style:italic;letter-spacing:1px;
+}
+.note-hint{
+  text-align:center;color:#8b7355;font-size:12px;
+  margin-top:16px;font-style:italic;
+}
+.lock-overlay{
+  position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  left:14px;right:14px;z-index:45;
+  display:none;align-items:center;justify-content:center;
+}
+.lock-overlay.show{display:block}
+.lock-panel{
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:14px;
+  padding:16px 20px;
+  text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.6);
+}
+.lock-title{
+  color:#d4a857;font-size:16px;font-weight:700;
+  letter-spacing:4px;margin-bottom:4px;
+}
+.lock-subtitle{
+  color:#8a7a60;font-size:11px;margin-bottom:12px;
+}
+.lock-wheels{
+  display:flex;justify-content:center;gap:14px;margin-bottom:14px;
+}
+.wheel{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.wheel-arrow{
+  color:#8b6914;font-size:16px;cursor:pointer;
+  padding:4px 12px;user-select:none;
+}
+.wheel-letter{
+  width:44px;height:44px;
+  background:linear-gradient(145deg,#b8860b,#8b6914);
+  border:2px solid #d4a857;border-radius:8px;
+  color:#fff;font-size:22px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.2),0 2px 8px rgba(0,0,0,.4);
+}
+.lock-submit{
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:1px solid rgba(255,220,150,.4);
+  padding:8px 32px;border-radius:16px;
+  font-size:13px;font-weight:700;letter-spacing:3px;
+  cursor:pointer;
+}
+.opened-overlay{
+  position:absolute;inset:0;z-index:60;
+  background:radial-gradient(circle,rgba(139,105,20,.3),rgba(0,0,0,.9));
+  display:none;align-items:center;justify-content:center;
+}
+.opened-panel{text-align:center;animation:fadeInUp .8s ease}
+.opened-note{
+  background:linear-gradient(145deg,#f5e6c8,#e8d5a8);
+  border:2px solid #8b6914;border-radius:4px;
+  padding:40px 50px;box-shadow:0 0 60px rgba(212,168,87,.5);
+  transform:rotate(-2deg);
+}
+.opened-note-text{
+  color:#3d2b1f;font-size:32px;font-weight:900;
+  letter-spacing:8px;
+}
+.opened-hint{
+  margin-top:20px;color:#d4a857;font-size:14px;
+  letter-spacing:3px;
+}
+.finale-overlay{
+  position:absolute;inset:0;z-index:70;
+  background:rgba(0,0,0,.9);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.finale-panel{
+  width:100%;padding:20px 20px 40px;
+}
+.finale-speaker{
+  color:#d4a857;font-size:15px;font-weight:700;margin-bottom:10px;
+}
+.finale-text{
+  color:#e8dcc8;font-size:16px;line-height:1.8;min-height:60px;
+}
+.finale-hint{
+  text-align:right;color:#8a7a60;font-size:14px;
+  animation:hintBlink 1.2s ease-in-out infinite;margin-top:10px;
+}
+.vault-overlay{
+  position:absolute;inset:0;z-index:80;
+  background:radial-gradient(circle,rgba(40,30,10,.95),rgba(0,0,0,1));
+  display:none;align-items:center;justify-content:center;
+}
+.vault-panel{
+  width:92%;max-width:400px;max-height:90%;
+  overflow-y:auto;
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:16px;
+  padding:24px 16px;
+}
+.vault-title{
+  text-align:center;color:#d4a857;font-size:22px;
+  font-weight:900;letter-spacing:8px;margin-bottom:4px;
+}
+.vault-subtitle{
+  text-align:center;color:#b8860b;font-size:12px;
+  margin-bottom:20px;letter-spacing:1px;
+}
+.vault-carousel{
+  position:relative;width:100%;margin-bottom:20px;
+  overflow:hidden;border-radius:12px;
+  border:1px solid rgba(139,105,20,.4);
+}
+.vault-track{
+  display:flex;transition:transform .4s ease;
+  width:100%;
+}
+.vault-slide{
+  width:100%;min-width:100%;flex-shrink:0;text-align:center;
+  padding:16px;box-sizing:border-box;
+}
+.vault-slide-img{
+  width:100%;aspect-ratio:1;border-radius:8px;
+  overflow:hidden;margin-bottom:12px;
+  background:rgba(139,105,20,.08);
+}
+.vault-slide-img img{
+  width:100%;height:100%;object-fit:contain;display:block;background:#f5efe5;
+}
+.vault-slide-text{
+  color:#e8dcc8;font-size:14px;line-height:1.6;
+  min-height:40px;
+}
+.vault-dots{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:5;
+}
+.vault-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(139,105,20,.3);cursor:pointer;
+  transition:all .3s;
+}
+.vault-dot.active{
+  background:#d4a857;transform:scale(1.3);
+}
+.vault-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:100%;display:flex;justify-content:space-between;
+  padding:0 4px;box-sizing:border-box;z-index:5;
+  pointer-events:none;
+}
+.vault-nav-btn{
+  pointer-events:auto;
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(0,0,0,.5);color:#d4a857;
+  border:1px solid rgba(139,105,20,.4);
+  font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.vault-nav-btn:active{background:rgba(139,105,20,.4);}
+.vault-note{
+  text-align:center;color:#b8860b;font-size:13px;
+  padding:12px;background:rgba(139,105,20,.1);
+  border-radius:8px;border:1px dashed rgba(139,105,20,.3);
+}
+.ending-overlay{
+  position:absolute;inset:0;z-index:90;
+  background:#000;
+  display:none;align-items:center;justify-content:center;
+}
+.ending-panel{
+  width:88%;max-width:360px;text-align:center;
+  animation:fadeInUp 1s ease;
+}
+.ending-title{
+  color:#d4a857;font-size:28px;font-weight:900;
+  letter-spacing:10px;margin-bottom:8px;
+}
+.ending-divider{
+  color:#8b6914;font-size:18px;margin-bottom:20px;
+}
+.ending-text{
+  color:#e8dcc8;font-size:15px;line-height:2;margin-bottom:16px;
+}
+.ending-thanks{
+  color:#b8860b;font-size:14px;letter-spacing:4px;margin-bottom:30px;
+}
+.ending-product-section{
+  margin-bottom:24px;
+}
+.ending-product-title{
+  color:#8b7a60;font-size:13px;margin-bottom:12px;letter-spacing:2px;
+}
+.ending-product-card{
+  background:rgba(139,105,20,.08);
+  border:1px solid rgba(139,105,20,.3);
+  border-radius:10px;padding:16px;
+}
+.ending-product-name{
+  color:#d4a857;font-size:17px;font-weight:700;margin-bottom:4px;
+}
+.ending-product-desc{
+  color:#8a7a60;font-size:12px;margin-bottom:8px;
+}
+.ending-product-tag{
+  color:#b8860b;font-size:12px;
+  background:rgba(139,105,20,.15);
+  padding:4px 12px;border-radius:12px;display:inline-block;
+}
+.ending-follow{
+  color:#6a5a40;font-size:12px;letter-spacing:1px;
+}
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-8px)}
+  75%{transform:translateX(8px)}
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+
+
+.opened-overlay.show{display:flex}
+.finale-overlay.show{display:flex}
+.vault-overlay.show{display:flex}
+.ending-overlay.show{display:flex}
+</style>
+
+</head>
+<body>
+<div id="game">
+  <div class="bg-layer show" id="bgLayer" style="background-image:url('cathedral_altar.jpg');"></div>
+  <div class="vignette show"></div>
+  <div class="top-bar show" id="topBar">
+    <span class="spacer"></span>
+    <span class="title-text">謎題四 · 祭台桌之謎</span>
+    <span class="spacer"></span>
+  </div>
+  <div class="dialog-box show" id="dlgBox">
+    <div class="speaker-row">
+      <span class="speaker-dot" id="dlgDot"></span>
+      <span class="speaker-name" id="dlgName"></span>
+    </div>
+    <div class="dialog-text" id="dlgText"></div>
+    <div class="dialog-hint" id="dlgHint" style="display:none;">▼ 點擊繼續</div>
+  </div>
+<div class="box-modal" id="boxModal">
+  <div class="box-modal-mask"></div>
+  <div class="box-modal-panel">
+    <div class="box-title">鄭一的遺物</div>
+    <img class="box-img" src="cryptex.jpg" alt="鄭一的密碼筒">
+    <button class="view-note-btn" onclick="openNote()">查看紙條</button>
+  </div>
+</div>
+
+<!-- 紙條詳情 -->
+<div class="paper-detail" id="paperDetail">
+  <div class="paper-detail-mask"></div>
+  <div class="paper-detail-panel">
+    <div class="note-title">破阵子</div>
+    <div class="note-poem">
+      二十載飄蓬海上，<br>
+      千帆過盡不封侯。<br>
+      黑霧迷航尋聖母，<br>
+      金甌一諾付滄洲。<br>
+      來時風雨滿樓閣，<br>
+      歸日煙波兩岸秋。<br>
+      若問藏鋒何處所，<br>
+      月照蓮洋水自流。
+    </div>
+    <div class="note-back">
+      —— 紙條背面 ——<br>
+      從神聖福音書開始，<br>
+      以四數之序取詩中三字，<br>
+      再以五為階梯，登天使之塔。<br>
+      信鴿會帶你去往最後的答案。
+    </div>
+    <div class="note-hint" onclick="closeNote()" style="cursor:pointer;color:#8b5a2b;font-size:14px;margin-top:20px;">▼ 點擊繼續</div>
+  </div>
+</div>
+
+<!-- 密碼鎖 -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-panel">
+    <div class="lock-title">密碼筒</div>
+    <div class="lock-subtitle">轉動三個圓環，解開密碼</div>
+    <div class="lock-wheels">
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(0,1)">▲</div>
+        <div class="wheel-letter" id="letter0">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(0,-1)">▼</div>
+      </div>
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(1,1)">▲</div>
+        <div class="wheel-letter" id="letter1">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(1,-1)">▼</div>
+      </div>
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(2,1)">▲</div>
+        <div class="wheel-letter" id="letter2">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(2,-1)">▼</div>
+      </div>
+    </div>
+    <button class="lock-submit" onclick="checkLock()">確認</button>
+    <div style="margin-top:16px;">
+      <span id="hintBtn" style="color:#8a7a60;font-size:12px;cursor:pointer;text-decoration:underline;" onclick="showHint()">提示（第1次）</span>
+    </div>
+  </div>
+</div>
+
+<!-- 密碼筒開啟 -->
+<div class="opened-overlay" id="openedOverlay">
+  <div class="opened-panel">
+    <div class="opened-note">
+      <div class="opened-note-text">China</div>
+    </div>
+    <div class="opened-hint">鄭一留下的最終線索</div>
+  </div>
+</div>
+
+<!-- 通關結算對話 -->
+<div class="finale-overlay" id="finaleOverlay">
+  <div class="finale-panel">
+    <div class="finale-speaker" id="finaleSpeaker">鄭一的後人</div>
+    <div class="finale-text" id="finaleText"></div>
+    <div class="finale-hint" id="finaleHint" style="display:none">▼ 點擊繼續</div>
+  </div>
+</div>
+
+<!-- 寶物庫 -->
+<div class="vault-overlay" id="vaultOverlay">
+  <div class="vault-panel">
+    <div class="vault-title">寶物庫</div>
+    <div class="vault-subtitle">恭喜通關！GlobalFun Go 精選 · 憑此畫面八折</div>
+    <div class="vault-carousel" id="vaultCarousel">
+      <div class="vault-track" id="vaultTrack">
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide1.png" alt="精選一"></div>
+          <div class="vault-slide-text">昆曲水袖杯 · ¥188</div>
+        </div>
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide2.png" alt="精選二"></div>
+          <div class="vault-slide-text">若即·折纸款香薰杯 · ¥298</div>
+        </div>
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide3.png" alt="精選三"></div>
+          <div class="vault-slide-text">束·炫白款 · ¥398</div>
+        </div>
+      </div>
+      <div class="vault-dots" id="vaultDots"></div>
+      <div class="vault-nav">
+        <button class="vault-nav-btn" id="vaultPrev" onclick="vaultSlide(-1)">&#10094;</button>
+        <button class="vault-nav-btn" id="vaultNext" onclick="vaultSlide(1)">&#10095;</button>
+      </div>
+    </div>
+    <div class="vault-note">截圖此畫面發給UP主，即可享八折優惠（GlobalFun Go · 景德鎮手工陶瓷）</div>
+    <div style="text-align:center;margin-top:16px;">
+      <span style="color:#8b6914;font-size:13px;cursor:pointer;text-decoration:underline;" onclick="showEnding()">通關結算 →</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 寶物庫輪播 ===
+var vaultSlideIdx = 0;
+function vaultSlide(dir){
+  vaultSlideIdx += dir;
+  var track = document.getElementById('vaultTrack');
+  var total = track.children.length;
+  if(vaultSlideIdx < 0) vaultSlideIdx = total - 1;
+  if(vaultSlideIdx >= total) vaultSlideIdx = 0;
+  track.style.transform = 'translateX(-' + (vaultSlideIdx * 100) + '%)';
+  updateVaultDots();
+}
+function updateVaultDots(){
+  var dots = document.getElementById('vaultDots');
+  var slides = document.getElementById('vaultTrack').children;
+  if(!dots) return;
+  dots.innerHTML = '';
+  for(var i=0;i<slides.length;i++){
+    var d = document.createElement('div');
+    d.className = 'vault-dot' + (i===vaultSlideIdx ? ' active' : '');
+    (function(idx){ d.onclick = function(){ vaultSlideIdx = idx; document.getElementById('vaultTrack').style.transform='translateX(-'+(idx*100)+'%)'; updateVaultDots(); }; })(i);
+    dots.appendChild(d);
+  }
+}
+(function(){
+  var startX=0, endX=0;
+  var carousel = document.getElementById('vaultCarousel');
+  if(!carousel) return;
+  carousel.addEventListener('touchstart', function(e){ startX = e.touches[0].clientX; }, {passive:true});
+  carousel.addEventListener('touchend', function(e){
+    endX = e.changedTouches[0].clientX;
+    var diff = startX - endX;
+    if(Math.abs(diff) > 40){ vaultSlide(diff > 0 ? 1 : -1); }
+  }, {passive:true});
+})();
+// Init dots when page loads
+window.addEventListener('load', function(){ setTimeout(updateVaultDots, 100); });
+</script>
+
+<!-- 通關結算尾頁 -->
+<div class="ending-overlay" id="endingOverlay">
+  <div class="ending-panel">
+    <div class="ending-title">恭喜通關</div>
+    <div class="ending-divider">✦</div>
+    <div class="ending-text">
+      你解開了鄭一留下的最後謎題。<br>
+      這趟澳門尋寶之旅，到此圓滿結束～<br>
+      謝謝你的參與，希望你玩得愉快～
+    </div>
+    <div class="ending-product-section" style="margin-top:28px;">
+      <div class="ending-product-title">其他項目</div>
+      <div class="ending-product-card">
+        <div class="ending-product-name">澳門媽閣廟迷蹤</div>
+        <div class="ending-product-desc">澳門媽閣廟解密體驗</div>
+        <div class="ending-product-tag">憑通關憑證，後台八折領取</div>
+      </div>
+    </div>
+    <div class="ending-follow" style="margin-top:24px;">歡迎關注，後續產品持續更新中</div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(139,105,20,.2);">
+      <div style="color:#5a4a30;font-size:11px;line-height:1.8;">
+        本遊戲最終解釋權歸粵港澳大灣區博士協會<br>
+        GlobalFun Go 項目組所有
+      </div>
+      <div style="color:#8a7a60;font-size:12px;margin-top:8px;">
+        歡迎感興趣的朋友來聯繫我們
+      </div>
+      <div style="color:#d4a857;font-size:14px;margin-top:4px;font-weight:700;">
+        WeChat：ysyang2005
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="press-btn-overlay" id="pressBtn" onclick="pressMitre()">
+  <div class="press-btn">按下主教冠圓牌</div>
+</div>
+
+</div>
+
+<script>
+// 音頻系統（Web Audio，繞過自動播放限制）
+// ============================================================
+let scp_audioCtx = null;
+function initAudio(){
+  if(scp_audioCtx) return;
+  try{ scp_audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+
+function scp_sfxWoodTick(){
+  if(!scp_audioCtx) return;
+  const o = scp_audioCtx.createOscillator();
+  const g = scp_audioCtx.createGain();
+  o.type = 'triangle'; o.frequency.value = 800;
+  g.gain.setValueAtTime(0.08, scp_audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.05);
+  o.connect(g).connect(scp_audioCtx.destination);
+  o.start(); o.stop(scp_audioCtx.currentTime + 0.05);
+}
+function scp_sfxPaper(){
+  if(!scp_audioCtx) return;
+  const bufferSize = scp_audioCtx.sampleRate * 0.15;
+  const buffer = scp_audioCtx.createBuffer(1, bufferSize, scp_audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize) * 0.3; }
+  const src = scp_audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = scp_audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 2000;
+  src.connect(filter).connect(scp_audioCtx.destination);
+  src.start();
+}
+function scp_sfxFootsteps(){
+  if(!scp_audioCtx) return;
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const o = scp_audioCtx.createOscillator();
+      const g = scp_audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 120 + Math.random()*40;
+      g.gain.setValueAtTime(0.12, scp_audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.12);
+      o.connect(g).connect(scp_audioCtx.destination);
+      o.start(); o.stop(scp_audioCtx.currentTime + 0.12);
+    }, i*200);
+  }
+}
+function scp_vibrate(pattern){
+  if(navigator.vibrate) navigator.vibrate(pattern);
+}
+
+function sfxWoodTick(){ scp_sfxWoodTick(); }
+function sfxPaper(){ scp_sfxPaper(); }
+function sfxFootsteps(){ scp_sfxFootsteps(); }
+function vibrate(p){ scp_vibrate(p); }
+
+let sc_toastTimer = null;
+function showToast(msg, duration){
+  duration = duration || 2000;
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(sc_toastTimer);
+  sc_toastTimer = setTimeout(()=>{ toast.classList.remove("show"); }, duration);
+}
+
+
+
+const scp_dlgBox = document.getElementById("dlgBox");
+const scp_dlgDot = document.getElementById("dlgDot");
+const scp_dlgName = document.getElementById("dlgName");
+const scp_dlgText = document.getElementById("dlgText");
+const scp_dlgHint = document.getElementById("dlgHint");
+
+// Non-prefixed aliases for main_js
+const dlgBox = scp_dlgBox;
+const dlgDot = scp_dlgDot;
+const dlgName = scp_dlgName;
+const dlgText = scp_dlgText;
+const dlgHint = scp_dlgHint;
+
+let scp_isTyping = false;
+let scp_typeTimer = null;
+
+// ===== 主祭壇對話 =====
+const scp_altarDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"到了……這就是鄭一說的『她護住的地方』。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……祭台正面刻著三個圓牌——中間那個，好像是主教冠。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……歷任澳門總督上任時，都要把權杖放在聖母像旁祈求庇護。" },
+  { speaker:"elena", name:"艾蓮娜", text:"那麼，如果我們按下這個象徵權力的王冠的話……" }
+];
+let scp_altarIdx = 0;
+let scp_inAltar = false;
+
+function showAltarLine(index){
+  if(index >= scp_altarDialogues.length){
+    scp_inAltar = false;
+    scp_dlgBox.classList.remove("show");
+    // 彈出「按下主教冠圓牌」按鈕
+    setTimeout(()=>{
+      const btn = document.getElementById("pressBtn");
+      btn.classList.add("show");
+    }, 500);
+    return;
+  }
+  const line = scp_altarDialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+
+scp_dlgBox.addEventListener("click", ()=>{
+  initAudio();
+  // Post-note dialogue (only after closeNote)
+  if(postNoteActive){
+    if(postNoteTyping){
+      completePostNoteTyping();
+      return;
+    }
+    postNoteDialoguesIdx++;
+    showPostNoteLine(postNoteDialoguesIdx);
+    return;
+  }
+  // Altar dialogue
+  if(scp_isTyping){
+    clearInterval(scp_typeTimer);
+    scp_dlgText.innerHTML = scp_altarDialogues[scp_altarIdx].text;
+    scp_isTyping = false;
+    scp_dlgHint.style.display = "block";
+    return;
+  }
+  scp_altarIdx++;
+  showAltarLine(scp_altarIdx);
+});
+
+// ============================================================
+// 按壓主教冠 → 密碼筒
+// ============================================================
+function pressMitre(){
+  initAudio();
+  const btn = document.getElementById("pressBtn");
+  btn.classList.remove("show");
+  vibrate([30,80,30,80,30]);
+  sfxWoodTick();
+  setTimeout(()=>{
+    document.getElementById("boxModal").classList.add("show");
+  }, 800);
+}
+
+function openNote(){
+  initAudio();
+  sfxPaper();
+  vibrate(10);
+  document.getElementById("paperDetail").classList.add("show");
+}
+
+function closeNote(){
+  // Hide box modal only; keep paper visible for reference
+  const bm = document.getElementById("boxModal");
+  bm.classList.remove("show");
+  bm.style.display = "none";
+  // Dim paper mask slightly so dialogue reads clearly
+  const mask = document.querySelector(".paper-detail-mask");
+  if(mask) mask.style.background = "rgba(0,0,0,.55)";
+  setTimeout(()=>{
+    postNoteActive = true;
+    postNoteDialoguesIdx = 0;
+    dlgBox.classList.add("show");
+    showPostNoteLine(0);
+  }, 300);
+}
+
+// ============================================================
+// 紙條後對話系統
+// ============================================================
+const postNoteDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"從神聖的福音書開始……之前解出的密碼是2416，就是從聖經章節來的。" },
+  { speaker:"zhujiao", name:"主角", text:"2、4、1、6……兩兩一組？第二行第四字、第一行第六字……不对，才兩個字。" },
+  { speaker:"elena", name:"艾蓮娜", text:"密碼筒是三個圓環。也許2416裡只用了三個座標——第二行第四字、第四行第一字、第一行第六字。" },
+  { speaker:"zhujiao", name:"主角", text:"第二行第四字是盡，第四行第一字是金，第一行第六字是海——三個起點。" },
+  { speaker:"elena", name:"艾蓮娜", text:"以五為階梯，登天使之塔……從每個起點往後數五個字。" },
+  { speaker:"zhujiao", name:"主角", text:"盡往後五字是霧，金往後五字是滄，海往後五字是盡。霧、滄、盡——拼音首字母W、C、J。" },
+  { speaker:"elena", name:"艾蓮娜", text:"信鴿會帶你去往最後的答案……之前側堂數到的七個小天使，就是七步——把W、C、J各往後移七位。" }
+];
+let postNoteDialoguesIdx = 0;
+let postNoteTyping = false;
+let postNoteTimer = null;
+let postNoteActive = false;
+
+function showPostNoteLine(index){
+  if(index >= postNoteDialogues.length){
+    dlgBox.classList.remove("show");
+    dlgHint.style.display = "none";
+    // Keep paper visible, just lighten mask
+    const pm = document.querySelector(".paper-detail-mask");
+    if(pm) pm.style.background = "rgba(0,0,0,.35)";
+    setTimeout(()=>{
+      document.getElementById("lockOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = postNoteDialogues[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+  postNoteTyping = true;
+  let i = 0;
+  const text = line.text;
+  postNoteTimer = setInterval(()=>{
+    if(i < text.length){
+      dlgText.innerHTML = text.substring(0, i+1) + '<span class="dialog-cursor"></span>';
+      i++;
+      if(i % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(postNoteTimer);
+      postNoteTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function completePostNoteTyping(){
+  clearInterval(postNoteTimer);
+  dlgText.innerHTML = postNoteDialogues[postNoteDialoguesIdx].text;
+  postNoteTyping = false;
+  dlgHint.style.display = "block";
+}
+
+// ============================================================
+// 密碼鎖
+// ============================================================
+let hintLevel = 0;
+const hintMessages = [
+  "想想「信鴿會帶你去往最後的答案」——信鴿數量就是位移步數",
+  "把 W、C、J 三個字母各往後挪七位（A=0，Z=25，到頭則循環）",
+  "W+7=D，C+7=J，J+7=Q——密碼就是 D J Q"
+];
+function showHint(){
+  initAudio();
+  vibrate(10);
+  if(hintLevel < hintMessages.length){
+    showToast(hintMessages[hintLevel], 4000);
+    hintLevel++;
+    const btn = document.getElementById("hintBtn");
+    if(btn && hintLevel < hintMessages.length) btn.textContent = "提示（第"+(hintLevel+1)+"次）";
+    else if(btn) btn.textContent = "提示（已用完）";
+  } else {
+    showToast("再想想：W往後7位是D，C往後7位是J，J往後7位是Q", 4000);
+  }
+}
+
+let currentLetters = [0,0,0];
+const ANSWER = [3,9,16]; // D,J,Q
+
+function changeLetter(wheel, dir){
+  initAudio();
+  sfxWoodTick();
+  currentLetters[wheel] = (currentLetters[wheel] + dir + 26) % 26;
+  document.getElementById("letter"+wheel).textContent = String.fromCharCode(65 + currentLetters[wheel]);
+}
+
+function checkLock(){
+  let correct = true;
+  for(let i=0;i<3;i++){
+    if(currentLetters[i] !== ANSWER[i]){ correct = false; break; }
+  }
+  if(correct){
+    sfxWoodTick();
+    vibrate([50,100,50,100,50]);
+    document.getElementById("lockOverlay").classList.remove("show");
+    setTimeout(()=>{
+      document.getElementById("openedOverlay").classList.add("show");
+      document.getElementById("openedOverlay").style.cursor = "pointer";
+      document.getElementById("openedOverlay").onclick = startFinale;
+    }, 600);
+  } else {
+    sfxWoodTick();
+    vibrate([200,50,200]);
+    const panel = document.querySelector(".lock-panel");
+    panel.style.animation = "none";
+    setTimeout(()=>{ panel.style.animation = "shake .4s"; }, 10);
+  }
+}
+
+// ============================================================
+// 通關結算對話
+// ============================================================
+const finaleLines = [
+  { speaker:"鄭一的後人", text:"……你終於找到了。我是鄭一的後人，世代守著這個秘密。" },
+  { speaker:"鄭一的後人", text:"這位老先生當年縱橫南海，卻把一筆最大的財寶藏在了這座教堂裡。" },
+  { speaker:"鄭一的後人", text:"他留下的不僅是金銀——而是China（瓷器），這些瓷器都是景德鎮手工打造的產物。" },
+  { speaker:"鄭一的後人", text:"恭喜你，通關了。這是寶物庫，裡頭是我們世代收藏的精品，憑此畫面給你八折。" }
+];
+let finaleIdx = 0;
+let finaleTyping = false;
+
+function startFinale(){
+  initAudio();
+  document.getElementById("openedOverlay").classList.remove("show");
+  finaleIdx = 0;
+  document.getElementById("finaleOverlay").classList.add("show");
+  showFinaleLine(0);
+}
+
+function showFinaleLine(index){
+  if(index >= finaleLines.length){
+    document.getElementById("finaleOverlay").classList.remove("show");
+    const op = document.getElementById("openedOverlay");
+    op.classList.remove("show");
+    op.style.display = "none";
+    const pd = document.getElementById("paperDetail");
+    if(pd){ pd.classList.remove("show"); pd.style.display = "none"; }
+    const bm = document.getElementById("boxModal");
+    if(bm){ bm.classList.remove("show"); bm.style.display = "none"; }
+    setTimeout(()=>{
+      document.getElementById("vaultOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = finaleLines[index];
+  document.getElementById("finaleSpeaker").textContent = line.speaker;
+  document.getElementById("finaleText").innerHTML = "";
+  document.getElementById("finaleHint").style.display = "none";
+  finaleTyping = true;
+  let i = 0;
+  const text = line.text;
+  const timer = setInterval(()=>{
+    if(i < text.length){
+      document.getElementById("finaleText").innerHTML = text.substring(0, i+1);
+      i++;
+    } else {
+      clearInterval(timer);
+      finaleTyping = false;
+      document.getElementById("finaleText").innerHTML = text;
+      document.getElementById("finaleHint").style.display = "block";
+    }
+  }, 35);
+  window._finaleTimer = timer;
+}
+
+document.getElementById("finaleOverlay").addEventListener("click", ()=>{
+  initAudio();
+  if(finaleTyping){
+    clearInterval(window._finaleTimer);
+    document.getElementById("finaleText").innerHTML = finaleLines[finaleIdx].text;
+    finaleTyping = false;
+    document.getElementById("finaleHint").style.display = "block";
+    return;
+  }
+  finaleIdx++;
+  showFinaleLine(finaleIdx);
+});
+
+function showEnding(){
+  initAudio();
+  document.getElementById("vaultOverlay").classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("endingOverlay").classList.add("show");
+  }, 400);
+}
+
+
+document.addEventListener('pointerdown', initAudio, {once:true});
+
+window.addEventListener("load", ()=>{
+  setTimeout(()=>{
+    scp_altarIdx = 0;
+    scp_inAltar = true;
+    sfxPaper();
+    vibrate(10);
+    showAltarLine(0);
+  }, 800);
+});
+</script>
+</body>
+</html>

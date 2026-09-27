@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>謎題三 · 七徵破四義</title>
+<style>
+/* 側堂謎題 CSS */
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#000;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+#game{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+  overflow:hidden;
+}
+
+/* 背景圖 */
+.bg-layer{
+  position:absolute;inset:0;z-index:1;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  opacity:0;transition:opacity 1s ease;
+}
+.bg-layer.show{opacity:1}
+.bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 25%,transparent 55%,rgba(0,0,0,.55) 100%);
+}
+
+/* 暗角 */
+.vignette{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  box-shadow:inset 0 0 120px rgba(0,0,0,.5);
+}
+
+/* 頂部標題欄 */
+.top-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding-top:env(safe-area-inset-top,0px);
+  background:linear-gradient(180deg,rgba(74,44,23,.95) 0%,rgba(92,58,30,.85) 100%);
+  border-bottom:2px solid #c9a96e;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:12px;padding-right:12px;
+  height:calc(48px + env(safe-area-inset-top,0px));
+  opacity:0;transition:opacity .6s ease;
+}
+.top-bar.show{opacity:1}
+.top-bar .back-btn{
+  background:none;border:none;color:#c9a96e;font-size:14px;cursor:pointer;
+  padding:6px 10px;letter-spacing:1px;
+}
+.top-bar .title-text{
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:4px;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.top-bar .spacer{width:48px;}
+
+/* 對話框 */
+.dialog-box{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  left:14px;right:14px;z-index:20;
+  background:rgba(245,240,232,.96);
+  border:2px solid #8b5a2b;
+  border-radius:8px;
+  padding:14px 16px 18px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3);
+  opacity:0;transform:translateY(20px);
+  transition:opacity .5s ease, transform .5s ease;
+  pointer-events:none;
+}
+.dialog-box.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.speaker-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.speaker-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.speaker-dot.elena{background:#7a4a6a}
+.speaker-dot.zhujiao{background:#2a5a6b}
+.speaker-name{
+  font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.speaker-name.elena{color:#7a4a6a}
+.speaker-name.zhujiao{color:#2a5a6b}
+.dialog-text{
+  color:#2a1810;font-size:15px;line-height:1.7;
+  min-height:52px;
+}
+.dialog-cursor{
+  display:inline-block;width:2px;height:16px;background:#5c3a1e;
+  animation:cursorBlink .7s step-end infinite;vertical-align:middle;margin-left:2px;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.dialog-hint{
+  position:absolute;bottom:6px;right:14px;
+  color:#8b7a5a;font-size:12px;letter-spacing:1px;
+  animation:hintBlink 1.2s ease-in-out infinite;
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* 轉場遮罩 */
+.transition-overlay{
+  position:absolute;inset:0;z-index:50;background:#000;
+  opacity:0;transition:opacity .8s ease;pointer-events:none;
+}
+.transition-overlay.darken{opacity:1}
+.transition-overlay.fade-out{opacity:0}
+
+/* Toast */
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+
+/* 選擇菜單（象徵七徵） */
+.choice-menu{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  left:14px;right:14px;z-index:15;
+  background:linear-gradient(180deg,rgba(74,44,23,.97) 0%,rgba(58,34,18,.97) 100%);
+  border:2px solid #c9a96e;border-radius:8px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1);
+  padding:0;
+  opacity:0;transform:translateY(30px);
+  transition:opacity .5s ease, transform .5s ease;
+  max-height:60vh;overflow-y:auto;
+}
+.choice-menu.show{opacity:1;transform:translateY(0)}
+.choice-title{
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border-bottom:1px solid #c9a96e;
+  padding:10px 16px;
+  color:#f0e6d2;font-size:14px;font-weight:700;
+  letter-spacing:4px;text-align:center;
+  position:sticky;top:0;z-index:1;
+}
+.choice-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  border-bottom:1px solid rgba(201,169,110,.2);
+  color:#d4c4a0;font-size:14px;
+  cursor:pointer;letter-spacing:1px;
+  transition:background .15s ease;
+}
+.choice-item:last-child{border-bottom:none}
+.choice-item:active{background:rgba(201,169,110,.15)}
+.choice-item .num{
+  color:#c9a96e;font-weight:700;min-width:20px;
+}
+.choice-item .check{
+  margin-left:auto;color:#6b8b3a;font-size:16px;
+  opacity:0;transition:opacity .3s ease;
+}
+.choice-item.observed .check{opacity:1}
+.choice-item.observed{color:#8a7a60;opacity:.6}
+
+/* 線索推理板 */
+.reasoning-panel{
+  position:absolute;inset:0;z-index:30;
+  background:rgba(20,12,6,.96);
+  display:flex;flex-direction:column;align-items:center;
+  padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px) 16px;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s ease;
+  overflow-y:auto;
+}
+.reasoning-panel.show{opacity:1;pointer-events:auto}
+.reasoning-title{
+  color:#c9a96e;font-size:16px;font-weight:700;
+  letter-spacing:6px;margin:24px 0 8px;text-align:center;
+}
+.reasoning-sub{
+  color:#8a7a60;font-size:12px;letter-spacing:2px;margin-bottom:20px;text-align:center;
+}
+.reasoning-cards{
+  display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;
+}
+.rcard{
+  background:linear-gradient(180deg,rgba(74,44,23,.9),rgba(58,34,18,.9));
+  border:1.5px solid #c9a96e;border-radius:8px;
+  padding:14px 16px;cursor:pointer;
+  transition:all .3s ease;
+}
+.rcard:active{transform:scale(.97)}
+.rcard.opened{border-color:#e8c97a;box-shadow:0 0 16px rgba(201,169,110,.3)}
+.rcard-head{
+  display:flex;align-items:center;gap:8px;
+  color:#d4c4a0;font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.rcard-head .ricon{color:#c9a96e;font-size:16px}
+.rcard-desc{
+  color:#a89878;font-size:12px;line-height:1.6;margin-top:6px;
+  max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .4s ease;
+  opacity:0;
+}
+.rcard.opened .rcard-desc{max-height:100px;opacity:1}
+.reasoning-arrow{
+  color:#c9a96e;font-size:20px;text-align:center;margin:4px 0;
+}
+.reasoning-question{
+  width:100%;max-width:340px;
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border:2px solid #c9a96e;border-radius:8px;
+  padding:16px;text-align:center;margin-top:16px;
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:2px;
+}
+.reasoning-choices{
+  display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:14px;
+}
+.rchoice{
+  background:rgba(74,44,23,.85);
+  border:1.5px solid rgba(201,169,110,.4);
+  border-radius:6px;padding:12px 16px;
+  color:#d4c4a0;font-size:14px;cursor:pointer;
+  letter-spacing:1px;text-align:center;
+  transition:all .2s ease;
+}
+.rchoice:active{background:rgba(201,169,110,.2)}
+.rchoice.correct{
+  border-color:#6b8b3a;background:rgba(107,139,58,.25);
+  color:#a8d07a;
+}
+.rchoice.wrong{
+  border-color:#8b3a3a;background:rgba(139,58,58,.25);
+  color:#d07a7a;
+}
+.reasoning-result{
+  color:#a8d07a;font-size:14px;text-align:center;margin-top:14px;
+  letter-spacing:1px;display:none;
+}
+.reasoning-result.show{display:block;animation:hintBlink 1.2s ease-in-out infinite}
+.press-btn-overlay{position:absolute;top:55%;left:0;right:0;display:flex;justify-content:center;z-index:25;opacity:0;transition:opacity .4s ease;pointer-events:none;transform:translateY(-50%)}
+.press-btn-overlay.show{opacity:1;pointer-events:auto}
+.press-btn{background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;padding:14px 36px;border-radius:30px;font-size:16px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,.4);border:1px solid rgba(255,220,150,.4);animation:pressPulse 2s ease-in-out infinite}
+@keyframes pressPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.box-modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center}
+.box-modal.show{display:flex}
+.box-modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.7);opacity:0;transition:opacity .4s}
+.box-modal.show .box-modal-mask{opacity:1}
+.box-modal-panel{position:relative;width:88%;max-width:420px;background:linear-gradient(145deg,#3d2b1f,#2a1d14);border:1px solid rgba(180,140,80,.4);border-radius:14px;padding:24px 20px;z-index:1;transform:scale(.8);opacity:0;transition:all .4s cubic-bezier(.2,1.4,.5,1)}
+.box-modal.show .box-modal-panel{transform:scale(1);opacity:1}
+.box-title{text-align:center;color:#d4a857;font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:2px}
+.box-art{display:flex;flex-direction:column;align-items:center;gap:14px}
+.wooden-box{width:120px;height:80px;position:relative}
+.wooden-box .box-lid{position:absolute;top:0;left:0;right:0;height:28px;background:linear-gradient(180deg,#5a3e28,#3d2b1f);border:1px solid #2a1d14;border-radius:6px 6px 0 0}
+.wooden-box .box-body{position:absolute;bottom:0;left:8px;right:8px;height:52px;background:linear-gradient(180deg,#4a3524,#2e2015);border:1px solid #2a1d14;border-radius:0 0 6px 6px;display:flex;align-items:center;justify-content:center}
+.wooden-box .box-body::after{content:"🔒";font-size:20px}
+.paper-note{width:100%;background:#f5e6c8;border-radius:6px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.3);font-family:serimeter;position:relative}
+.paper-note::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:rgba(139,90,43,.2)}
+.note-title{text-align:center;color:#5a3e28;font-size:16px;font-weight:700;margin-bottom:10px;letter-spacing:4px}
+.note-poem{color:#3d2b1f;font-size:14px;line-height:1.9;text-align:center;letter-spacing:2px}
+.box-hint{text-align:center;color:#8a7a60;font-size:12px;margin-top:14px;font-style:italic}
+.box-close-btn{display:block;margin:14px auto 0;background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;border:none;padding:10px 28px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer}
+.box-modal-mask{
+  position:absolute;inset:0;background:rgba(0,0,0,.75);
+  opacity:0;transition:opacity .4s;
+}
+.box-modal-panel{
+  position:relative;display:flex;flex-direction:column;align-items:center;z-index:1;
+  transform:scale(.8);opacity:0;
+  transition:all .4s cubic-bezier(.2,1.4,.5,1);
+}
+.box-title{
+  color:#d4a857;font-size:16px;font-weight:700;
+  margin-bottom:16px;letter-spacing:4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);
+}
+.box-img{
+  width:220px;height:220px;object-fit:cover;border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6), 0 0 0 2px rgba(180,140,80,.3);
+}
+.view-note-btn{
+  margin-top:14px;
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:none;padding:12px 32px;
+  border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 15px rgba(0,0,0,.4);
+  border:1px solid rgba(255,220,150,.4);
+}
+.paper-detail{
+  position:absolute;inset:0;z-index:35;
+  display:none;align-items:center;justify-content:center;
+}
+.note-title{
+  text-align:center;color:#5a3e28;font-size:18px;font-weight:700;
+  margin-bottom:14px;letter-spacing:6px;
+}
+.note-poem{
+  color:#3d2b1f;font-size:15px;line-height:2.0;
+  text-align:center;letter-spacing:3px;
+}
+.note-back{
+  margin-top:18px;padding-top:14px;
+  border-top:1px dashed rgba(139,90,43,.4);
+  text-align:center;color:#8b6914;font-size:13px;
+  line-height:1.8;font-style:italic;letter-spacing:1px;
+}
+.note-hint{
+  text-align:center;color:#8b7355;font-size:12px;
+  margin-top:16px;font-style:italic;
+}
+.lock-overlay{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;
+}
+.lock-panel{
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:16px;
+  padding:30px 24px;width:88%;max-width:340px;
+  text-align:center;box-shadow:0 0 40px rgba(139,105,20,.3);
+}
+.lock-title{
+  color:#d4a857;font-size:20px;font-weight:700;
+  letter-spacing:6px;margin-bottom:6px;
+}
+.lock-subtitle{
+  color:#8a7a60;font-size:12px;margin-bottom:24px;
+}
+.lock-wheels{
+  display:flex;justify-content:center;gap:18px;margin-bottom:28px;
+}
+.wheel{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.wheel-arrow{
+  color:#8b6914;font-size:16px;cursor:pointer;
+  padding:4px 12px;user-select:none;
+}
+.wheel-letter{
+  width:56px;height:56px;
+  background:linear-gradient(145deg,#b8860b,#8b6914);
+  border:2px solid #d4a857;border-radius:8px;
+  color:#fff;font-size:28px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.2),0 2px 8px rgba(0,0,0,.4);
+}
+.lock-submit{
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:1px solid rgba(255,220,150,.4);
+  padding:10px 40px;border-radius:20px;
+  font-size:15px;font-weight:700;letter-spacing:4px;
+  cursor:pointer;
+}
+.opened-overlay{
+  position:absolute;inset:0;z-index:60;
+  background:radial-gradient(circle,rgba(139,105,20,.3),rgba(0,0,0,.9));
+  display:none;align-items:center;justify-content:center;
+}
+.opened-panel{text-align:center;animation:fadeInUp .8s ease}
+.opened-note{
+  background:linear-gradient(145deg,#f5e6c8,#e8d5a8);
+  border:2px solid #8b6914;border-radius:4px;
+  padding:40px 50px;box-shadow:0 0 60px rgba(212,168,87,.5);
+  transform:rotate(-2deg);
+}
+.opened-note-text{
+  color:#3d2b1f;font-size:32px;font-weight:900;
+  letter-spacing:8px;
+}
+.opened-hint{
+  margin-top:20px;color:#d4a857;font-size:14px;
+  letter-spacing:3px;
+}
+.finale-overlay{
+  position:absolute;inset:0;z-index:70;
+  background:rgba(0,0,0,.9);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.finale-panel{
+  width:100%;padding:20px 20px 40px;
+}
+.finale-speaker{
+  color:#d4a857;font-size:15px;font-weight:700;margin-bottom:10px;
+}
+.finale-text{
+  color:#e8dcc8;font-size:16px;line-height:1.8;min-height:60px;
+}
+.finale-hint{
+  text-align:right;color:#8a7a60;font-size:14px;
+  animation:hintBlink 1.2s ease-in-out infinite;margin-top:10px;
+}
+.vault-overlay{
+  position:absolute;inset:0;z-index:80;
+  background:radial-gradient(circle,rgba(40,30,10,.95),rgba(0,0,0,1));
+  display:none;align-items:center;justify-content:center;
+}
+.vault-panel{
+  width:92%;max-width:400px;max-height:90%;
+  overflow-y:auto;
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:16px;
+  padding:24px 16px;
+}
+.vault-title{
+  text-align:center;color:#d4a857;font-size:22px;
+  font-weight:900;letter-spacing:8px;margin-bottom:4px;
+}
+.vault-subtitle{
+  text-align:center;color:#b8860b;font-size:12px;
+  margin-bottom:20px;letter-spacing:1px;
+}
+.vault-carousel{
+  position:relative;width:100%;margin-bottom:20px;
+  overflow:hidden;border-radius:12px;
+  border:1px solid rgba(139,105,20,.4);
+}
+.vault-track{
+  display:flex;transition:transform .4s ease;
+  width:100%;
+}
+.vault-slide{
+  width:100%;min-width:100%;flex-shrink:0;text-align:center;
+  padding:16px;box-sizing:border-box;
+}
+.vault-slide-img{
+  width:100%;aspect-ratio:1;border-radius:8px;
+  overflow:hidden;margin-bottom:12px;
+  background:rgba(139,105,20,.08);
+}
+.vault-slide-img img{
+  width:100%;height:100%;object-fit:contain;display:block;background:#f5efe5;
+}
+.vault-slide-text{
+  color:#e8dcc8;font-size:14px;line-height:1.6;
+  min-height:40px;
+}
+.vault-dots{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:5;
+}
+.vault-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(139,105,20,.3);cursor:pointer;
+  transition:all .3s;
+}
+.vault-dot.active{
+  background:#d4a857;transform:scale(1.3);
+}
+.vault-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:100%;display:flex;justify-content:space-between;
+  padding:0 4px;box-sizing:border-box;z-index:5;
+  pointer-events:none;
+}
+.vault-nav-btn{
+  pointer-events:auto;
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(0,0,0,.5);color:#d4a857;
+  border:1px solid rgba(139,105,20,.4);
+  font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.vault-nav-btn:active{background:rgba(139,105,20,.4);}
+.vault-note{
+  text-align:center;color:#b8860b;font-size:13px;
+  padding:12px;background:rgba(139,105,20,.1);
+  border-radius:8px;border:1px dashed rgba(139,105,20,.3);
+}
+.ending-overlay{
+  position:absolute;inset:0;z-index:90;
+  background:#000;
+  display:none;align-items:center;justify-content:center;
+}
+.ending-panel{
+  width:88%;max-width:360px;text-align:center;
+  animation:fadeInUp 1s ease;
+}
+.ending-title{
+  color:#d4a857;font-size:28px;font-weight:900;
+  letter-spacing:10px;margin-bottom:8px;
+}
+.ending-divider{
+  color:#8b6914;font-size:18px;margin-bottom:20px;
+}
+.ending-text{
+  color:#e8dcc8;font-size:15px;line-height:2;margin-bottom:16px;
+}
+.ending-thanks{
+  color:#b8860b;font-size:14px;letter-spacing:4px;margin-bottom:30px;
+}
+.ending-product-section{
+  margin-bottom:24px;
+}
+.ending-product-title{
+  color:#8b7a60;font-size:13px;margin-bottom:12px;letter-spacing:2px;
+}
+.ending-product-card{
+  background:rgba(139,105,20,.08);
+  border:1px solid rgba(139,105,20,.3);
+  border-radius:10px;padding:16px;
+}
+.ending-product-name{
+  color:#d4a857;font-size:17px;font-weight:700;margin-bottom:4px;
+}
+.ending-product-desc{
+  color:#8a7a60;font-size:12px;margin-bottom:8px;
+}
+.ending-product-tag{
+  color:#b8860b;font-size:12px;
+  background:rgba(139,105,20,.15);
+  padding:4px 12px;border-radius:12px;display:inline-block;
+}
+.ending-follow{
+  color:#6a5a40;font-size:12px;letter-spacing:1px;
+}
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-8px)}
+  75%{transform:translateX(8px)}
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+
+</style>
+
+</head>
+<body>
+<div id="game">
+
+  <!-- 背景：側堂聖母無原罪像 -->
+  <div class="bg-layer" id="bgLayer" style="background-image:url('cathedral_sidechapel.jpg');"></div>
+
+  <!-- 暗角 -->
+  <div class="vignette"></div>
+
+  <!-- 頂部標題欄 -->
+  <div class="top-bar" id="topBar">
+    <span class="spacer"></span>
+    <span class="title-text">謎題三 · 七徵破四義</span>
+    <span class="spacer"></span>
+  </div>
+
+  <!-- 對話框 -->
+  <div class="dialog-box" id="dlgBox">
+    <div class="speaker-row">
+      <span class="speaker-dot" id="dlgDot"></span>
+      <span class="speaker-name" id="dlgName"></span>
+    </div>
+    <div class="dialog-text" id="dlgText"></div>
+    <div class="dialog-hint" id="dlgHint" style="display:none;">▼ 點擊繼續</div>
+  </div>
+
+  <!-- 選擇菜單：象徵七徵 -->
+  <div class="choice-menu" id="choiceMenu">
+    <div class="choice-title">觀察選項</div>
+    <div class="choice-item" data-id="1">
+      <span class="num">①</span><span>觀察 A+M 符號</span><span class="check">✓</span>
+    </div>
+    <div class="choice-item" data-id="2">
+      <span class="num">②</span><span>觀察 雙手張開</span><span class="check">✓</span>
+    </div>
+    <div class="choice-item" data-id="3">
+      <span class="num">③</span><span>觀察 六根燭台</span><span class="check">✓</span>
+    </div>
+  </div>
+
+  <!-- 線索推理板：三徵交證 -->
+  <div class="reasoning-panel" id="reasoningPanel">
+    <div class="reasoning-title">三徵交證</div>
+    <div class="reasoning-sub">點擊線索卡回顧 → 選擇最終指向</div>
+    <div class="reasoning-cards">
+      <div class="rcard" data-clue="1">
+        <div class="rcard-head"><span class="ricon">①</span><span>A+M 符號</span></div>
+        <div class="rcard-desc">「在聖母保護之下」——線索不在像本身，在她護住的範圍內。</div>
+      </div>
+      <div class="reasoning-arrow">▼</div>
+      <div class="rcard" data-clue="2">
+        <div class="rcard-head"><span class="ricon">②</span><span>雙手張開</span></div>
+        <div class="rcard-desc">雙手張開向下——恩寵從她手中流向下方的祭台。</div>
+      </div>
+      <div class="reasoning-arrow">▼</div>
+      <div class="rcard" data-clue="3">
+        <div class="rcard-head"><span class="ricon">③</span><span>六根燭台</span></div>
+        <div class="rcard-desc">六燭對稱——整座教堂的中心是主祭壇。</div>
+      </div>
+    </div>
+    <div class="reasoning-question">三徵指向何處？</div>
+    <div class="reasoning-choices">
+      <div class="rchoice" data-answer="wrong">Ⓐ 側堂聖像腳下</div>
+      <div class="rchoice" data-answer="correct">Ⓑ 主祭壇祭台桌</div>
+      <div class="rchoice" data-answer="wrong">Ⓒ 教堂大門門檻</div>
+    </div>
+    <div class="reasoning-result" id="reasoningResult">✓ 三徵交證——指向主祭壇祭台桌</div>
+  </div>
+
+  <!-- 轉場遮罩 -->
+  <div class="transition-overlay" id="transOverlay"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+
+</div>
+
+<script>
+// 音頻系統（Web Audio，繞過自動播放限制）
+// ============================================================
+let scp_audioCtx = null;
+function scp_initAudio(){
+  if(scp_audioCtx) return;
+  try{ scp_audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+document.addEventListener('pointerdown', initAudio, {once:true});
+
+function scp_sfxWoodTick(){
+  if(!scp_audioCtx) return;
+  const o = scp_audioCtx.createOscillator();
+  const g = scp_audioCtx.createGain();
+  o.type = 'triangle'; o.frequency.value = 800;
+  g.gain.setValueAtTime(0.08, scp_audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.05);
+  o.connect(g).connect(scp_audioCtx.destination);
+  o.start(); o.stop(scp_audioCtx.currentTime + 0.05);
+}
+function scp_sfxPaper(){
+  if(!scp_audioCtx) return;
+  const bufferSize = scp_audioCtx.sampleRate * 0.15;
+  const buffer = scp_audioCtx.createBuffer(1, bufferSize, scp_audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize) * 0.3; }
+  const src = scp_audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = scp_audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 2000;
+  src.connect(filter).connect(scp_audioCtx.destination);
+  src.start();
+}
+function scp_sfxFootsteps(){
+  if(!scp_audioCtx) return;
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const o = scp_audioCtx.createOscillator();
+      const g = scp_audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 120 + Math.random()*40;
+      g.gain.setValueAtTime(0.12, scp_audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.12);
+      o.connect(g).connect(scp_audioCtx.destination);
+      o.start(); o.stop(scp_audioCtx.currentTime + 0.12);
+    }, i*200);
+  }
+}
+function scp_vibrate(pattern){
+  if(navigator.vibrate) navigator.vibrate(pattern);
+}
+
+
+// Aliases (scp_ functions are called without prefix in some places)
+function initAudio(){ scp_initAudio(); }
+function sfxWoodTick(){ scp_sfxWoodTick(); }
+function sfxPaper(){ scp_sfxPaper(); }
+function sfxFootsteps(){ scp_sfxFootsteps(); }
+function vibrate(p){ scp_vibrate(p); }
+
+let sc_toastTimer = null;
+function showToast(msg, duration){
+  duration = duration || 2000;
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(sc_toastTimer);
+  sc_toastTimer = setTimeout(()=>{ toast.classList.remove("show"); }, duration);
+}
+
+
+
+const scp_dialogues = [
+  { speaker:"elena", name:"艾蓮娜", text:"（腳步聲停住）……到了。這就是側堂。", sfx:"footsteps" },
+  { speaker:"zhujiao", name:"主角", text:"黃牆、小天使、六根燭台……和手札上寫的一模一樣。" },
+  { speaker:"elena", name:"艾蓮娜", text:"這尊聖母像……雙手張開，腳下踩著蛇。感覺不單純是供奉。" },
+  { speaker:"zhujiao", name:"主角", text:"鄭一選這裡做接應點，一定有原因。先看看四周。" }
+];
+
+let scp_currentLine = 0;
+let scp_isTyping = false;
+let scp_typeTimer = null;
+let scp_inAltar = false;
+let scp_altarIdx = 0;
+let scp_altarDialogues = [];
+
+// 觀察對話狀態
+let scp_isInObserve = false;
+let scp_currentObserveItem = null;
+let scp_currentObserveLine = 0;
+const scp_observeDialogues = {
+  "1": [
+    { speaker:"zhujiao", name:"主角", text:"祭台正面……有個交織的A和M字母。" },
+    { speaker:"elena", name:"艾蓮娜", text:"A和M交織在一起……這是什麼記號？" },
+    { speaker:"zhujiao", name:"主角", text:"這是Auspice Maria——『在聖母保護之下』的意思。" },
+    { speaker:"elena", name:"艾蓮娜", text:"在聖母保護之下……也就是說，重要的不是像，而是她護住的東西？" },
+    { speaker:"zhujiao", name:"主角", text:"沒錯。鄭一用這個符號告誡後人——別盯著像看，看她護住的地方。" }
+  ],
+  "2": [
+    { speaker:"zhujiao", name:"主角", text:"她的雙手是張開的……不是祈禱的姿勢，像是在傾瀉什麼。" },
+    { speaker:"elena", name:"艾蓮娜", text:"傾瀉……你是說，神力不是附在像上，而是從她手中流向下方？" },
+    { speaker:"zhujiao", name:"主角", text:"對，流向下方——也就是祭台的位置。鄭一在暗示，東西在像的下方。" }
+  ],
+  "3": [
+    { speaker:"zhujiao", name:"主角", text:"左右各三根燭台，一共六根……它們把聖母像框在正中間。" },
+    { speaker:"elena", name:"艾蓮娜", text:"六根燭台左右對稱……它們不是在裝飾，而是在指出中心點？" },
+    { speaker:"zhujiao", name:"主角", text:"對，中心點——側堂的中心是這尊像，但整座教堂的中心，是主祭壇。" }
+  ]
+};
+
+const scp_dlgBox = document.getElementById("dlgBox");
+const scp_dlgDot = document.getElementById("dlgDot");
+const scp_dlgName = document.getElementById("dlgName");
+const scp_dlgText = document.getElementById("dlgText");
+const scp_dlgHint = document.getElementById("dlgHint");
+
+function scp_showDialogue(index){
+  if(index >= scp_dialogues.length){
+    scp_finishDialogues();
+    return;
+  }
+  const line = scp_dialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+
+  if(line.sfx === "footsteps") sfxFootsteps();
+
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function scp_completeTyping(){
+  clearInterval(scp_typeTimer);
+  let text;
+  if(scp_inWrap){
+    text = scp_wrapDialogues[scp_wrapIdx].text;
+  } else if(scp_isInObserve){
+    text = scp_observeDialogues[scp_currentObserveItem][scp_currentObserveLine].text;
+  } else {
+    text = scp_dialogues[scp_currentLine].text;
+  }
+  scp_dlgText.innerHTML = text;
+  scp_isTyping = false;
+  scp_dlgHint.style.display = "block";
+}
+
+scp_dlgBox.addEventListener("click", ()=>{
+  initAudio();
+  if(scp_isTyping){ scp_completeTyping(); return; }
+  if(scp_inWrap){
+    scp_wrapIdx++;
+    showWrapLine(scp_wrapIdx);
+    return;
+  }
+  if(scp_isInObserve){
+    scp_currentObserveLine++;
+    showObserveLine(scp_currentObserveLine);
+    return;
+  }
+  scp_currentLine++;
+  scp_showDialogue(scp_currentLine);
+});
+
+function scp_finishDialogues(){
+  scp_dlgBox.classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("choiceMenu").classList.add("show");
+    sfxPaper();
+    vibrate(10);
+  }, 400);
+}
+
+// ===== 觀察對話系統 =====
+function startObserve(itemId){
+  if(!scp_observeDialogues[itemId]) return false;
+  scp_isInObserve = true;
+  scp_currentObserveItem = itemId;
+  scp_currentObserveLine = 0;
+  document.getElementById("choiceMenu").classList.remove("show");
+  setTimeout(()=>{
+    scp_dlgBox.classList.add("show");
+    sfxPaper();
+    vibrate(10);
+    showObserveLine(0);
+  }, 350);
+  return true;
+}
+
+function showObserveLine(index){
+  const lines = scp_observeDialogues[scp_currentObserveItem];
+  if(index >= lines.length){
+    finishObserve();
+    return;
+  }
+  const line = lines[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function finishObserve(){
+  scp_isInObserve = false;
+  scp_dlgBox.classList.remove("show");
+  const item = document.querySelector('.choice-item[data-id="' + scp_currentObserveItem + '"]');
+  if(item) item.classList.add("observed");
+  scp_currentObserveItem = null;
+  const remaining = document.querySelectorAll('.choice-item:not(.observed)');
+  setTimeout(()=>{
+    if(remaining.length === 0){
+      document.getElementById("reasoningPanel").classList.add("show");
+      sfxPaper();
+    } else {
+      document.getElementById("choiceMenu").classList.add("show");
+      sfxPaper();
+    }
+  }, 400);
+}
+
+// 選擇菜單點擊
+document.querySelectorAll(".choice-item").forEach(item=>{
+  item.addEventListener("click", ()=>{
+    initAudio();
+    if(item.classList.contains("observed")){
+      showToast("已觀察過");
+      return;
+    }
+    const id = item.dataset.id;
+    if(!startObserve(id)){
+      const names = {
+        "1":"A+M 符號","2":"雙手張開","3":"六根燭台"
+      };
+      showToast("觀察「" + names[id] + "」（後續畫面開發中）");
+    }
+  });
+});
+
+// ===== 線索推理板交互 =====
+document.querySelectorAll(".rcard").forEach(card=>{
+  card.addEventListener("click", ()=>{
+    initAudio();
+    card.classList.toggle("opened");
+    sfxPaper();
+  });
+});
+
+document.querySelectorAll(".rchoice").forEach(ch=>{
+  ch.addEventListener("click", ()=>{
+    initAudio();
+    if(ch.dataset.answer === "correct"){
+      ch.classList.add("correct");
+      document.querySelectorAll(".rchoice").forEach(c=>c.style.pointerEvents="none");
+      document.getElementById("reasoningResult").classList.add("show");
+      vibrate([50,50,50]);
+      sfxPaper();
+      setTimeout(()=>{
+        document.getElementById("reasoningPanel").classList.remove("show");
+        setTimeout(()=>{
+          scp_dlgBox.classList.add("show");
+          sfxPaper();
+          vibrate(10);
+          scp_wrapIdx = 0;
+          showWrapLine(0);
+        }, 600);
+      }, 1800);
+    } else {
+      ch.classList.add("wrong");
+      vibrate(200);
+      setTimeout(()=>ch.classList.remove("wrong"), 800);
+      showToast("再想想……三條線索的交點在哪？");
+    }
+  });
+});
+
+// ===== 收尾對話（推理正確後） =====
+const scp_wrapDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"三條線索——保護範圍、向下傾瀉、中心位置——全部指向主祭壇的祭台桌。" },
+  { speaker:"elena", name:"艾蓮娜", text:"所以鄭一藏東西的地方，不在側堂，而在主祭壇……走吧。" }
+];
+let scp_wrapIdx = 0;
+let scp_inWrap = false;
+
+
+// showWrapLine - redirect to 9.html when wrap dialogues finish
+function showWrapLine(index){
+  if(index >= scp_wrapDialogues.length){
+    scp_inWrap = false;
+    scp_dlgBox.classList.remove("show");
+    setTimeout(()=>{
+      sfxFootsteps();
+      const ov = document.getElementById("transOverlay");
+      ov.classList.remove("fade-out");
+      ov.style.opacity = "1";
+      setTimeout(()=>{
+        window.location.href = "9.html";
+      }, 1200);
+    }, 500);
+    return;
+  }
+  scp_inWrap = true;
+  const line = scp_wrapDialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+// Start puzzle on load
+window.addEventListener("load", ()=>{
+  document.querySelector(".bg-layer").classList.add("show");
+  document.getElementById("topBar").classList.add("show");
+  setTimeout(()=>{
+    scp_currentLine = 0;
+    scp_isTyping = false;
+    scp_dlgBox.classList.add("show");
+    scp_showDialogue(0);
+  }, 800);
+});
+</script>
+</body>
+</html>
