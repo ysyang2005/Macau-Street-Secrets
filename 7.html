@@ -1,0 +1,4550 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>第四章 · 主座教堂尋寶</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #1a1208;
+    font-family: "Songti SC", "SimSun", "STSong", serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.game-container {
+    position: relative;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== 背景图 ===== */
+.bg-image {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1.2s ease-out;
+    z-index: 1;
+}
+.bg-image.active { opacity: 1 !important; }
+
+/* ===== 暗角 ===== */
+.vignette {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.35) 100%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* ===== 暗化转场层 ===== */
+.transition-overlay {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 600;
+    transition: opacity 1.0s ease-in-out;
+}
+.transition-overlay.darken {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== 顶部标题栏 ===== */
+.top-title-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    background: linear-gradient(180deg, #5c3d2e, #4a2f22);
+    border-bottom: 2px solid #c9a96e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    z-index: 60;
+    transform: translateY(-100%);
+    transition: transform 0.5s ease-out;
+}
+.top-title-bar.show { transform: translateY(0) !important; opacity: 1 !important; }
+
+.title-back-btn {
+    background: linear-gradient(180deg, #6b4a35, #543826);
+    border: 1px solid #c9a96e;
+    border-radius: 6px;
+    color: #f5e6c8;
+    font-size: 13px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.title-back-btn:active { transform: scale(0.95); }
+
+.title-text {
+    color: #f5e6c8;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ===== 存档读档按钮 ===== */
+.game-save-panel {
+    position: absolute;
+    top: 56px; right: 12px;
+    z-index: 500;
+    display: flex;
+    gap: 8px;
+}
+.save-btn {
+    background: linear-gradient(180deg, #6b4a35, #543826);
+    border: 1px solid #c9a96e;
+    border-radius: 6px;
+    color: #f5e6c8;
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.save-btn:active { transform: scale(0.95); }
+
+/* ===== 对话框 ===== */
+.dialogue-box {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    width: 92%;
+    max-width: 500px;
+    min-height: 120px;
+    background: rgba(245, 230, 200, 0.94);
+    border: 3px solid #5c3d2e;
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 30;
+    transition: transform 0.5s ease-out;
+    cursor: pointer;
+}
+.dialogue-box.visible {
+    transform: translateX(-50%) translateY(0);
+}
+.dialogue-box.glow {
+    box-shadow: 0 0 20px rgba(201, 169, 110, 0.6), 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.speaker-name {
+    font-size: 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.speaker-name.elena { color: #2d5a3d; }
+.speaker-name.zhujiao { color: #1a3a5c; }
+.speaker-name::before {
+    content: "▶";
+    font-size: 10px;
+}
+
+.dialogue-text {
+    color: #2a1810;
+    font-size: 16px;
+    line-height: 1.8;
+    min-height: 58px;
+}
+
+.dialogue-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 16px;
+    background: #2a1810;
+    animation: blink 0.8s infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+@keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
+
+.continue-hint {
+    position: absolute;
+    bottom: 8px; right: 14px;
+    font-size: 12px;
+    color: #7a5c2e;
+    animation: breathe 1.2s infinite;
+}
+@keyframes breathe { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+
+/* ===== 底部功能按钮 ===== */
+.action-container {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.action-container.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* 对话框可见时，底部木质按钮框自动隐藏 */
+.dialogue-box.visible ~ .action-container {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.action-btn {
+    background: linear-gradient(180deg, #6b4a35, #4a2f22);
+    border: 2px solid #c9a96e;
+    border-radius: 8px;
+    color: #f5e6c8;
+    font-size: 15px;
+    padding: 12px 18px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    transform: translateY(20px) scale(0.8);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    min-height: 44px;
+}
+.action-btn.primary {
+    background: linear-gradient(180deg, #8b6914, #6b4f0e);
+    border-color: #e8c86e;
+    box-shadow: 0 0 12px rgba(232, 200, 110, 0.4), 0 3px 10px rgba(0,0,0,0.3);
+}
+.action-btn.show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.action-btn:active { transform: scale(0.95); }
+.action-btn:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.5);
+}
+
+/* ===== 弹窗通用 ===== */
+.modal-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: linear-gradient(180deg, #f5e6c8, #e8d5a8);
+    border: 4px solid #5c3d2e;
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 460px;
+    max-height: 82vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+
+.modal-title {
+    text-align: center;
+    font-size: 17px;
+    color: #5c3d2e;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #c9a96e;
+    letter-spacing: 2px;
+}
+
+.modal-close-btn {
+    display: block;
+    margin: 14px auto 0;
+    background: linear-gradient(180deg, #6b4a35, #4a2f22);
+    border: 1px solid #c9a96e;
+    border-radius: 6px;
+    color: #f5e6c8;
+    font-size: 14px;
+    padding: 8px 24px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.modal-close-btn:active { transform: scale(0.95); }
+
+/* ===== 彩窗选择题 ===== */
+.quiz-modal {
+    background: linear-gradient(180deg, #f8edd4, #eddcb8);
+}
+.quiz-progress {
+    text-align: center;
+    font-size: 13px;
+    color: #8b6914;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+.quiz-question {
+    font-size: 16px;
+    color: #2a1810;
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 6px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.quiz-option {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #fff8e8, #f0e0b8);
+    border: 2px solid #c9a96e;
+    border-radius: 8px;
+    color: #2a1810;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+.quiz-option:active { transform: scale(0.97); }
+.quiz-option.correct {
+    background: linear-gradient(180deg, #d4edda, #a8d5b0);
+    border-color: #4a7c59;
+    color: #1a4a2a;
+}
+.quiz-option.wrong {
+    background: linear-gradient(180deg, #f8d7da, #f0b0b5);
+    border-color: #a04040;
+    color: #6a1a1a;
+    animation: shake 0.4s ease;
+}
+.quiz-option:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.quiz-feedback {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 6px;
+    font-size: 14px;
+    color: #4a3020;
+    line-height: 1.7;
+    text-align: center;
+}
+
+/* 凯撒密码解码器 */
+.caesar-wheel-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #8b7355;
+    background: linear-gradient(180deg, #a08060, #7a5a40);
+    color: #f5e6c8;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+}
+.caesar-wheel-btn:active { transform: scale(0.92); }
+.caesar-key-display {
+    width: 48px;
+    height: 40px;
+    background: linear-gradient(180deg, #2a1a10, #1a0f08);
+    border: 2px solid #8b7355;
+    border-radius: 6px;
+    color: #f5d76e;
+    font-family: 'Courier New', monospace;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 8px rgba(245,215,110,0.5);
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* ===== 手札卷轴 ===== */
+.journal-scroll {
+    background: linear-gradient(180deg, #f0e0b8, #e0c890);
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 0 0 3px #5c3d2e, 0 8px 40px rgba(0,0,0,0.5);
+    padding: 24px 20px;
+}
+.journal-text {
+    color: #3a2810;
+    font-size: 15px;
+    line-height: 2;
+    letter-spacing: 1px;
+}
+.journal-text .highlight { color: #8b2500; font-weight: bold; }
+.journal-note {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #a08050;
+    font-size: 13px;
+    color: #6a5030;
+    font-style: italic;
+}
+
+/* ===== 彩窗观察弹窗 ===== */
+.glass-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+}
+.glass-cell {
+    border: 2px solid #5c3d2e;
+    border-radius: 6px;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.glass-cell:active { transform: scale(0.95); }
+.glass-cell.red { background: linear-gradient(180deg, #c44, #822); }
+.glass-cell.teal { background: linear-gradient(180deg, #4aa, #266); }
+.glass-cell.blue { background: linear-gradient(180deg, #448, #226); }
+.glass-cell.orange { background: linear-gradient(180deg, #c84, #862); }
+.glass-icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.glass-label {
+    font-size: 11px;
+    color: #f5e6c8;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    line-height: 1.4;
+}
+.glass-chapter {
+    font-size: 10px;
+    color: #ffd700;
+    margin-top: 2px;
+}
+.glass-volume {
+    font-size: 13px;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 1px 8px;
+    margin-bottom: 4px;
+    border: 1px solid rgba(255,215,0,0.6);
+}
+.glass-hint {
+    font-size: 12px;
+    color: #5c3d2e;
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* ===== 铜像观察弹窗 ===== */
+.statue-container {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+}
+.statue-svg {
+    width: 100%;
+    height: auto;
+}
+.hotspot {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.3);
+    border: 2px solid #ffd700;
+    cursor: pointer;
+    animation: hotspotPulse 1.5s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #ffd700;
+    font-weight: bold;
+}
+@keyframes hotspotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+}
+.hotspot.found {
+    background: rgba(0, 200, 0, 0.4);
+    border-color: #0c0;
+    color: #0c0;
+    animation: none;
+}
+.hotspot-sword { top: 13%; left: 30%; }
+.hotspot-dragon { top: 68%; left: 42%; }
+.statue-detail {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(92, 61, 46, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #c9a96e;
+    font-size: 14px;
+    color: #2a1810;
+    line-height: 1.6;
+    min-height: 40px;
+}
+.statue-detail .num {
+    font-size: 20px;
+    font-weight: bold;
+    color: #8b2500;
+}
+.statue-status {
+    text-align: center;
+    font-size: 12px;
+    color: #7a5c2e;
+    margin-top: 8px;
+}
+
+/* ===== 密码输入面板 ===== */
+.password-panel {
+    background: linear-gradient(180deg, #f5e6c8, #e8d5a8);
+    border: 4px solid #5c3d2e;
+    border-radius: 12px;
+    padding: 20px;
+    width: 88%;
+    max-width: 360px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.password-title {
+    text-align: center;
+    font-size: 16px;
+    color: #5c3d2e;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+.password-gospel-ref {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.gospel-tag {
+    font-size: 10px;
+    color: #5c3d2e;
+    background: rgba(139,107,20,0.12);
+    border: 1px solid rgba(139,107,20,0.35);
+    border-radius: 4px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    text-align: center;
+}
+.gospel-tag .vol { font-weight: bold; color: #8b6914; }
+.gospel-tag .ch { color: #2d7a2d; font-weight: bold; }
+.password-slots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.password-slot {
+    width: 50px;
+    height: 60px;
+    background: #fff8e8;
+    border: 2px solid #5c3d2e;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #2a1810;
+    font-weight: bold;
+}
+.password-slot.shake {
+    animation: slotShake 0.4s ease;
+}
+@keyframes slotShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.key-btn {
+    height: 48px;
+    background: linear-gradient(180deg, #6b4a35, #4a2f22);
+    border: 1px solid #c9a96e;
+    border-radius: 6px;
+    color: #f5e6c8;
+    font-size: 18px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.key-btn:active { transform: scale(0.93); background: linear-gradient(180deg, #8b6a45, #6a4f32); }
+.key-btn.wide { grid-column: span 1; }
+.password-hint-btn {
+    display: block;
+    margin: 12px auto 0;
+    background: none;
+    border: 1px dashed #c9a96e;
+    border-radius: 4px;
+    color: #7a5c2e;
+    font-size: 12px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.password-hint-text {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #8b2500;
+    text-align: center;
+    line-height: 1.6;
+    display: none;
+}
+.password-hint-text.show { display: block; }
+
+/* ===== 通关动效 ===== */
+.glass-glow {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+}
+.glass-glow.active {
+    animation: glassGlowAnim 2s ease-out forwards;
+}
+@keyframes glassGlowAnim {
+    0% { opacity: 0; }
+    30% { opacity: 1; box-shadow: inset 0 0 80px 30px rgba(255, 215, 0, 0.6); }
+    100% { opacity: 0; box-shadow: inset 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+.fragment-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(180deg, #c9a96e, #8b6914);
+    border: 3px solid #5c3d2e;
+    border-radius: 10px;
+    padding: 20px 30px;
+    text-align: center;
+    z-index: 250;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+}
+.fragment-card.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+.fragment-card .frag-title {
+    font-size: 13px;
+    color: #3a2810;
+    margin-bottom: 6px;
+}
+.fragment-card .frag-num {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2a1810;
+    letter-spacing: 4px;
+}
+.fragment-card .frag-mark {
+    font-size: 16px;
+    color: #5c3d2e;
+    margin-top: 4px;
+}
+
+/* ===== 入口高亮（场景1） ===== */
+.entrance-highlight {
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 25%;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+}
+.entrance-highlight.flash {
+    opacity: 1;
+    box-shadow: 0 0 40px 15px rgba(255, 215, 0, 0.5);
+    animation: entranceFlash 0.8s ease-out;
+}
+@keyframes entranceFlash {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ===== 铜像高亮（场景2） ===== */
+.statue-highlight {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 35%;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+}
+.statue-highlight.flash {
+    opacity: 1;
+    box-shadow: 0 0 40px 15px rgba(255, 215, 0, 0.5);
+    animation: entranceFlash 0.8s ease-out;
+}
+
+/* ===== Toast提示 ===== */
+.toast {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: #f5e6c8;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 700;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 80%;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+
+    <!-- 背景图 -->
+    <img src="cathedral_exterior.jpg" alt="大堂前地" class="bg-image" id="bgImage1">
+    <img src="cathedral_entrance.jpg" alt="教堂入口" class="bg-image" id="bgImage2">
+    <img src="cathedral_interior.jpg" alt="主祭壇" class="bg-image" id="bgImage3">
+    <img src="cathedral_window_closeup.jpg" alt="彩窗特寫" class="bg-image" id="bgImage4">
+    <img src="cathedral_sidechapel.jpg" alt="側堂聖母像" class="bg-image" id="bgImage5">
+
+    <!-- 高亮层 -->
+    <div class="entrance-highlight" id="entranceHighlight"></div>
+    <div class="statue-highlight" id="statueHighlight"></div>
+    <div class="glass-glow" id="glassGlow"></div>
+
+    <!-- 暗角 -->
+    <div class="vignette"></div>
+
+    <!-- 顶部标题栏 -->
+    <div class="top-title-bar" id="topTitleBar">
+        <button class="title-back-btn" id="backBtn">← 返回</button>
+        <span class="title-text" id="titleText">第四章 · 主座教堂</span>
+        <span style="width:32px;"></span>
+    </div>
+
+    <!-- 存档读档 -->
+    <div class="game-save-panel">
+        <button class="save-btn" id="saveBtn">存檔</button>
+        <button class="save-btn" id="loadBtn">讀檔</button>
+    </div>
+
+    <!-- 对话框 -->
+    <div class="dialogue-box" id="dialogueBox">
+        <div class="speaker-name" id="speakerName"></div>
+        <div class="dialogue-text" id="dialogueText"></div>
+        <div class="continue-hint" id="continueHint" style="display:none;">▼ 點擊繼續</div>
+    </div>
+
+    <!-- 底部功能按钮 -->
+    <div class="action-container" id="actionContainer">
+        <!-- 场景1按钮 -->
+        <button class="action-btn primary" id="enterChurchBtn">進入教堂</button>
+        <button class="action-btn" id="journalBtn1">查看手札</button>
+        <!-- 场景2按钮 -->
+        <button class="action-btn" id="observeGlassBtn" style="display:none;">觀察彩窗</button>
+        <button class="action-btn" id="observeStatueBtn" style="display:none;">查看銅像</button>
+        <button class="action-btn primary" id="inputCodeBtn" style="display:none;">輸入暗碼</button>
+        <button class="action-btn" id="journalBtn2" style="display:none;">查看手札</button>
+        <!-- 场景3按钮 -->
+        <button class="action-btn" id="observeWindowBtn" style="display:none;">觀察彩窗</button>
+        <button class="action-btn" id="observePlaqueBtn" style="display:none;">觀察銘牌</button>
+        <button class="action-btn primary" id="inputCodeBtn3" style="display:none;">輸入暗碼</button>
+        <button class="action-btn" id="journalBtn3" style="display:none;">查看手札</button>
+    </div>
+
+    <!-- 手札弹窗 -->
+    <div class="modal-overlay" id="journalModal">
+        <div class="modal-content journal-scroll">
+            <div class="modal-title">鄭一手札 · 殘頁七</div>
+            <div class="journal-text">
+                堂前三器，各藏一數；<br>
+                由外而內，次第破解；<br>
+                三數相合，便知寶藏歸處。
+                <hr class="modal-body divider" style="border:none;border-top:1px dashed #a08050;margin:12px 0;">
+                <span class="journal-note">
+                    【旁註】四活物守四門，<br>
+                    福音章數為鑰；<br>
+                    天使所持之數取卷，<br>
+                    惡龍所翼之數取卷，<br>
+                    二卷章數相連，即為暗碼。
+                </span>
+            </div>
+            <button class="modal-close-btn" id="journalCloseBtn">收起</button>
+        </div>
+    </div>
+
+    <!-- 彩窗观察弹窗 -->
+    <div class="modal-overlay" id="glassModal">
+        <div class="modal-content">
+            <div class="modal-title">四活物彩窗 · 觀察</div>
+            <div class="glass-grid">
+                <div class="glass-cell red" onclick="showGlassDetail(0)">
+                    <div class="glass-volume">第1卷</div>
+                    <div class="glass-icon">👼</div>
+                    <div class="glass-label">人(天使)<br>馬太</div>
+                    <div class="glass-chapter">28章</div>
+                </div>
+                <div class="glass-cell teal" onclick="showGlassDetail(1)">
+                    <div class="glass-volume">第2卷</div>
+                    <div class="glass-icon">🦁</div>
+                    <div class="glass-label">有翼獅<br>馬可</div>
+                    <div class="glass-chapter">16章</div>
+                </div>
+                <div class="glass-cell blue" onclick="showGlassDetail(2)">
+                    <div class="glass-volume">第3卷</div>
+                    <div class="glass-icon">🐂</div>
+                    <div class="glass-label">有翼牛<br>路加</div>
+                    <div class="glass-chapter">24章</div>
+                </div>
+                <div class="glass-cell orange" onclick="showGlassDetail(3)">
+                    <div class="glass-volume">第4卷</div>
+                    <div class="glass-icon">🦅</div>
+                    <div class="glass-label">雄鷹<br>約翰</div>
+                    <div class="glass-chapter">21章</div>
+                </div>
+            </div>
+            <div class="glass-hint" id="glassHint">從左到右四扇彩窗，依次標註第1至第4卷福音書</div>
+            <button class="modal-close-btn" id="glassCloseBtn">收起</button>
+        </div>
+    </div>
+
+    <!-- 铜像观察弹窗 -->
+    <div class="modal-overlay" id="statueModal">
+        <div class="modal-content">
+            <div class="modal-title">天使長米迦勒銅像 · 觀察</div>
+            <div class="statue-container">
+                <svg class="statue-svg" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 米迦勒翅膀 -->
+                    <path d="M60 80 Q30 60 25 100 Q35 90 55 95 Z" fill="#5a4a3a" opacity="0.8"/>
+                    <path d="M140 80 Q170 60 175 100 Q165 90 145 95 Z" fill="#5a4a3a" opacity="0.8"/>
+                    <!-- 头 -->
+                    <circle cx="100" cy="55" r="18" fill="#6b5a4a"/>
+                    <!-- 身体 -->
+                    <path d="M80 75 L75 160 L125 160 L120 75 Z" fill="#5a4a3a"/>
+                    <!-- 铠甲细节 -->
+                    <path d="M85 85 L82 140 L118 140 L115 85 Z" fill="#7a6a5a" opacity="0.5"/>
+                    <!-- 战裙垂片 -->
+                    <rect x="82" y="135" width="8" height="25" fill="#6b5a4a" rx="1"/>
+                    <rect x="92" y="135" width="8" height="28" fill="#6b5a4a" rx="1"/>
+                    <rect x="102" y="135" width="8" height="28" fill="#6b5a4a" rx="1"/>
+                    <rect x="112" y="135" width="8" height="25" fill="#6b5a4a" rx="1"/>
+                    <!-- 右手持朴素圣剑 -->
+                    <line x1="75" y1="90" x2="58" y2="55" stroke="#4a3a2a" stroke-width="4"/>
+                    <!-- 剑柄 -->
+                    <rect x="55" y="48" width="6" height="10" fill="#6b5a4a" rx="1"/>
+                    <!-- 朴素剑格(护手) -->
+                    <rect x="46" y="44" width="24" height="4" fill="#8b7355" rx="1"/>
+                    <!-- 剑刃 -->
+                    <polygon points="58,44 54,44 56,12 60,12" fill="#9a8a7a"/>
+                    <line x1="58" y1="44" x2="58" y2="14" stroke="#b8a898" stroke-width="1"/>
+                    <!-- 左手持锁链 -->
+                    <path d="M125 95 Q145 110 140 140 Q135 155 120 160" stroke="#4a3a2a" stroke-width="3" fill="none" stroke-dasharray="4,3"/>
+                    <!-- 脚 -->
+                    <rect x="82" y="160" width="14" height="20" fill="#4a3a2a" rx="2"/>
+                    <rect x="104" y="160" width="14" height="20" fill="#4a3a2a" rx="2"/>
+                    <!-- 恶龙(人形恶魔)身体 -->
+                    <ellipse cx="100" cy="210" rx="40" ry="18" fill="#3a2a1a"/>
+                    <!-- 恶龙头部(人形无角) -->
+                    <ellipse cx="72" cy="190" rx="12" ry="14" fill="#3a2a1a"/>
+                    <circle cx="68" cy="188" r="2" fill="#c44"/>
+                    <circle cx="75" cy="188" r="2" fill="#c44"/>
+                    <!-- 恶龙蝙蝠状翅膀 -->
+                    <path d="M85 200 Q60 185 45 200 Q55 205 65 210 Q55 215 50 225 Q70 218 85 215 Z" fill="#2a1a0a"/>
+                    <path d="M115 200 Q140 185 155 200 Q145 205 135 210 Q145 215 150 225 Q130 218 115 215 Z" fill="#2a1a0a"/>
+                    <!-- 恶龙尾巴 -->
+                    <path d="M135 215 Q155 220 150 240 Q145 248 135 245" stroke="#3a2a1a" stroke-width="5" fill="none"/>
+                    <!-- 底座 -->
+                    <rect x="70" y="225" width="60" height="15" fill="#4a3a2a" rx="2"/>
+                    <rect x="60" y="240" width="80" height="12" fill="#3a2a1a" rx="2"/>
+                </svg>
+                <div class="hotspot hotspot-sword" id="hotspotSword" onclick="examineHotspot('sword')">!</div>
+                <div class="hotspot hotspot-dragon" id="hotspotDragon" onclick="examineHotspot('dragon')">!</div>
+            </div>
+            <div class="statue-detail" id="statueDetail">
+                點擊發光區域觀察細節…
+            </div>
+            <div class="statue-status" id="statueStatus">已發現 0/2 處線索</div>
+            <button class="modal-close-btn" id="statueCloseBtn">收起</button>
+        </div>
+    </div>
+
+    <!-- 密码输入面板 -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="password-panel">
+            <div class="password-title">四活物福音密碼</div>
+            <div class="password-gospel-ref">
+                <div class="gospel-tag"><span class="vol">卷1</span> 馬太 <span class="ch">28</span></div>
+                <div class="gospel-tag"><span class="vol">卷2</span> 馬可 <span class="ch">16</span></div>
+                <div class="gospel-tag"><span class="vol">卷3</span> 路加 <span class="ch">24</span></div>
+                <div class="gospel-tag"><span class="vol">卷4</span> 約翰 <span class="ch">21</span></div>
+            </div>
+            <div class="password-slots">
+                <div class="password-slot" id="slot0">_</div>
+                <div class="password-slot" id="slot1">_</div>
+                <div class="password-slot" id="slot2">_</div>
+                <div class="password-slot" id="slot3">_</div>
+            </div>
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn" onclick="pressKey('del')">←</button>
+                <button class="key-btn" onclick="pressKey('0')">0</button>
+                <button class="key-btn" onclick="pressKey('ok')" style="background:linear-gradient(180deg,#8b6914,#6b4f0e);">✓</button>
+            </div>
+            <button class="password-hint-btn" id="passwordHintBtn" style="display:none;" onclick="showPasswordHint()">💡 提示</button>
+            <div class="password-hint-text" id="passwordHintText"></div>
+        </div>
+    </div>
+
+    <!-- 暗码碎片卡 -->
+    <div class="fragment-card" id="fragmentCard">
+        <div class="frag-title">暗碼碎片 · 其一</div>
+        <div class="frag-num">2816</div>
+        <div class="frag-mark">· 門 ·</div>
+    </div>
+
+    <!-- 彩窗观察选择菜单 -->
+    <div class="modal-overlay" id="windowObserveModal">
+        <div class="modal-content quiz-modal">
+            <div class="modal-title" id="observeTitle">觀察彩窗</div>
+            <div class="quiz-progress" id="observeProgress">已觀察 0 / 4 處</div>
+            <div class="quiz-question" style="min-height:30px;padding:6px;">選擇要觀察的部分</div>
+            <div class="quiz-options" id="observeOptions"></div>
+            <button class="modal-close-btn" id="observeCloseBtn" style="display:none;">返回祭壇</button>
+        </div>
+    </div>
+
+    <!-- 彩窗知识卡 -->
+    <div class="modal-overlay" id="windowKnowledgeModal">
+        <div class="modal-content">
+            <div class="modal-title">知識卡・誕生的聖母</div>
+            <div style="color:#2a1810;font-size:13px;line-height:1.9;text-align:left;">
+                <b style="color:#8b4513;">★ 與一般聖誕窗不同</b><br>
+                多數教堂的「誕生窗」描繪耶穌誕生：<br>
+                馬槽、牧羊人、東方三博士。<br><br>
+                <b style="color:#8b4513;">★ 本堂獨有：聖母誕辰</b><br>
+                澳門主教座堂主保為<br>
+                「聖母誕辰」（9月8日）。<br>
+                這扇半圓窗畫的是<br>
+                <b>誕生的聖母瑪利亞</b>，而非耶穌。<br><br>
+                <b style="color:#8b4513;">★ 辨認關鍵</b><br>
+                ・聖嬰頭戴冠冕（天地元后）<br>
+                ・上方聖靈白鴿（無染原罪）<br>
+                ・5位天使（聖母五喜樂）<br>
+                ・7只白鴿（聖靈七恩）<br><br>
+                鄭一正是利用這一獨特之處，<br>
+                作為寶藏線索的雙重驗證。
+            </div>
+            <button class="modal-close-btn" id="knowledgeCloseBtn">收入手札</button>
+        </div>
+    </div>
+
+    <!-- 古老铭牌弹窗 -->
+    <div class="modal-overlay" id="plaqueModal">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-title">古老銘牌</div>
+            <div style="background:linear-gradient(180deg,#d4c4a0,#b8a67a);border:2px solid #8b7355;border-radius:6px;padding:20px;margin:12px 0;text-align:center;">
+                <div style="font-family:'Courier New',monospace;font-size:22px;letter-spacing:6px;color:#3a2a1a;font-weight:bold;margin-bottom:8px;">UVA QLZBZ</div>
+                <div style="font-family:'Courier New',monospace;font-size:22px;letter-spacing:6px;color:#3a2a1a;font-weight:bold;">RFWNF</div>
+                <div style="font-size:11px;color:#6b5a40;margin-top:12px;letter-spacing:2px;">— 以窗中所見為鑰，左移解之 —</div>
+            </div>
+            <div style="color:#5a4a3a;font-size:13px;line-height:1.7;text-align:left;margin-bottom:12px;">
+                銘牌上刻著兩行古怪字母。<br>
+                艾蓮娜：「這是替換密碼……每個字母都被移動了固定的位數。」<br>
+                主角：「鑰匙就在彩窗裡——白鴿和天使的數量。」
+            </div>
+            <button class="modal-close-btn" id="plaqueDecodeBtn">打開解碼器</button>
+            <button class="modal-close-btn" id="plaqueCloseBtn" style="background:linear-gradient(180deg,#8a7a6a,#6a5a4a);margin-top:8px;">返回</button>
+        </div>
+    </div>
+
+    <!-- 凯撒密码解码器 -->
+    <div class="modal-overlay" id="caesarModal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-title">雙鑰解碼器</div>
+            <div style="color:#5a4a3a;font-size:12px;text-align:center;margin-bottom:12px;">轉動木輪，選擇每行的移動位數</div>
+
+            <!-- 第一行 -->
+            <div style="background:rgba(245,235,215,0.6);border-radius:8px;padding:14px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-size:13px;color:#3a2a1a;font-weight:bold;">第一行</span>
+                    <span style="font-size:13px;color:#8b4513;font-weight:bold;">白鴿的數目</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+                    <button class="caesar-wheel-btn" data-line="0" data-dir="-1">◀</button>
+                    <div class="caesar-key-display" id="caesarKey0">0</div>
+                    <button class="caesar-wheel-btn" data-line="0" data-dir="1">▶</button>
+                    <span style="font-size:12px;color:#6b5a40;">位</span>
+                </div>
+                <div style="text-align:center;margin-top:8px;font-family:'Courier New',monospace;font-size:18px;letter-spacing:4px;color:#1a5a2a;font-weight:bold;min-height:24px;" id="caesarResult0">UVA QLZBZ</div>
+            </div>
+
+            <!-- 第二行 -->
+            <div style="background:rgba(245,235,215,0.6);border-radius:8px;padding:14px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-size:13px;color:#3a2a1a;font-weight:bold;">第二行</span>
+                    <span style="font-size:13px;color:#8b4513;font-weight:bold;">天使的數目</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+                    <button class="caesar-wheel-btn" data-line="1" data-dir="-1">◀</button>
+                    <div class="caesar-key-display" id="caesarKey1">0</div>
+                    <button class="caesar-wheel-btn" data-line="1" data-dir="1">▶</button>
+                    <span style="font-size:12px;color:#6b5a40;">位</span>
+                </div>
+                <div style="text-align:center;margin-top:8px;font-family:'Courier New',monospace;font-size:18px;letter-spacing:4px;color:#1a5a2a;font-weight:bold;min-height:24px;" id="caesarResult1">RFWNF</div>
+            </div>
+
+            <div id="caesarFeedback" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:8px;"></div>
+            <button class="modal-close-btn" id="caesarVerifyBtn" style="display:none;">確認解碼</button>
+            <button class="modal-close-btn" id="caesarCloseBtn" style="background:linear-gradient(180deg,#8a7a6a,#6a5a4a);margin-top:8px;">返回銘牌</button>
+        </div>
+    </div>
+
+    <!-- 返回确认弹窗 -->
+    <div class="modal-overlay" id="backModal">
+        <div class="modal-content">
+            <div class="modal-title">返回上一章？</div>
+            <div style="color:#2a1810;font-size:15px;text-align:center;line-height:1.8;">
+                當前進度將保留在存檔中。<br>確定返回盧家大屋篇嗎？
+            </div>
+            <div style="display:flex; gap:12px; justify-content:center; margin-top:16px;">
+                <button class="modal-close-btn" id="backConfirmBtn" style="margin:0;">確定返回</button>
+                <button class="modal-close-btn" id="backCancelBtn" style="margin:0;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下一幕过渡 -->
+    <div class="modal-overlay" id="victoryModal" style="background:rgba(10,5,2,0.92);">
+        <div style="text-align:center; padding:40px 30px;">
+            <div style="font-size:14px; color:#c9a96e; letter-spacing:8px; margin-bottom:20px; opacity:0.8;">— 本章完 —</div>
+            <div id="victoryTitle" style="font-size:28px; color:#f0e6d2; font-weight:700; letter-spacing:6px; margin-bottom:12px;">下一幕</div>
+            <div style="width:60px; height:2px; background:linear-gradient(90deg,transparent,#c9a96e,transparent); margin:0 auto 20px;"></div>
+            <div id="victorySubtitle" style="font-size:18px; color:#d4c4a0; letter-spacing:4px; margin-bottom:30px;">側堂 · 聖母無原罪像</div>
+            <div style="font-size:13px; color:#8a7a60; line-height:1.8; margin-bottom:30px;">
+                黃牆之下，聖母無染原罪<br>
+                足下踏蛇，手中傾恩<br>
+                寶藏的真正方位，藏在這裡
+            </div>
+            <button class="modal-close-btn" id="victoryCloseBtn" style="margin:0 auto; display:block;">前往側堂</button>
+        </div>
+    </div>
+
+    <!-- 暗化转场 -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ============================================================
+// 音频系统
+// ============================================================
+let audioCtx = null;
+function initAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch(e) {}
+    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playSound(freq, duration, type, volume) {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(volume || 0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+}
+
+function playNoise(duration, freq, volume) {
+    if (!audioCtx) return;
+    try {
+        const bufferSize = audioCtx.sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = freq || 400;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(volume || 0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        source.start();
+    } catch(e) {}
+}
+
+// 具体音效
+function sfxBell() { playSound(880, 0.8, "sine", 0.06); }
+function sfxPaper() { playNoise(0.3, 300, 0.04); }
+function sfxPanel() {
+    playSound(400, 0.15, "sine", 0.03);
+    setTimeout(() => playSound(600, 0.15, "sine", 0.03), 80);
+}
+function sfxWoodTick() { playSound(600, 0.05, "triangle", 0.02); }
+function sfxFootsteps() {
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => playSound(120, 0.07, "square", 0.03 + i * 0.01), i * 180);
+    }
+}
+function sfxDoorCreak() {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    } catch(e) {}
+}
+function sfxMetalChime() { playSound(1320, 0.6, "sine", 0.03); }
+function sfxGlass() { playSound(1568, 0.4, "sine", 0.04); }
+function sfxGlassDing() { playSound(2093, 0.2, "sine", 0.03); }
+function sfxWoodClack() {
+    playSound(300, 0.1, "square", 0.05);
+    setTimeout(() => playSound(250, 0.1, "square", 0.05), 80);
+}
+function sfxButtonHover() { playSound(500, 0.03, "triangle", 0.02); }
+function sfxButtonPress() { playSound(180, 0.08, "square", 0.05); }
+function sfxKeyPress() { playSound(300, 0.06, "square", 0.04); }
+function sfxError() {
+    playSound(150, 0.2, "sawtooth", 0.05);
+    setTimeout(() => playSound(120, 0.2, "sawtooth", 0.05), 100);
+}
+function sfxSuccess() {
+    playSound(523, 0.2, "sine", 0.06);
+    setTimeout(() => playSound(659, 0.2, "sine", 0.06), 150);
+    setTimeout(() => playSound(784, 0.4, "sine", 0.06), 300);
+}
+function sfxVictory() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((f, i) => {
+        setTimeout(() => playSound(f, 0.3, "sine", 0.05), i * 120);
+    });
+}
+function sfxDistantBell() { playSound(440, 2.0, "sine", 0.04); }
+
+// 环境底噪
+let ambientNoiseNode = null;
+function startAmbient() {
+    if (!audioCtx || ambientNoiseNode) return;
+    try {
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+        ambientNoiseNode = audioCtx.createBufferSource();
+        ambientNoiseNode.buffer = buffer;
+        ambientNoiseNode.loop = true;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 600;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.025;
+        ambientNoiseNode.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        ambientNoiseNode.start();
+    } catch(e) {}
+}
+
+function scheduleDistantBell() {
+    const delay = 18000 + Math.random() * 22000;
+    setTimeout(() => { sfxDistantBell(); scheduleDistantBell(); }, delay);
+}
+
+// ============================================================
+// 震动
+// ============================================================
+function vibrate(pattern) {
+    if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch(e) {}
+    }
+}
+
+// ============================================================
+// 场景管理
+// ============================================================
+let currentScene = 1;
+const bgImage1 = document.getElementById("bgImage1");
+const bgImage2 = document.getElementById("bgImage2");
+const bgImage3 = document.getElementById("bgImage3");
+const bgImage4 = document.getElementById("bgImage4");
+const bgImage5 = document.getElementById("bgImage5");
+const titleText = document.getElementById("titleText");
+const entranceHighlight = document.getElementById("entranceHighlight");
+const statueHighlight = document.getElementById("statueHighlight");
+const glassGlow = document.getElementById("glassGlow");
+
+function switchScene(target) {
+    if (target === currentScene) return;
+    transitionOverlay.classList.add("darken");
+    setTimeout(() => {
+        if (target === 1) {
+            bgImage2.classList.remove("active");
+            bgImage3.classList.remove("active");
+            bgImage1.classList.add("active");
+            titleText.textContent = "第四章 · 主座教堂";
+        } else if (target === 2) {
+            bgImage1.classList.remove("active");
+            bgImage3.classList.remove("active");
+            bgImage2.classList.add("active");
+            titleText.textContent = "謎題一 · 四活物彩窗";
+        } else if (target === 3) {
+            bgImage1.classList.remove("active");
+            bgImage2.classList.remove("active");
+            bgImage3.classList.add("active");
+            titleText.textContent = "謎題二 · 聖母誕辰窗";
+        }
+        currentScene = target;
+        setTimeout(() => {
+            transitionOverlay.classList.remove("darken");
+        }, 300);
+    }, 1000);
+}
+
+// 進入側堂（謎題三·七徵破四義 畫面1）
+function enterSideChapel() {
+    transitionOverlay.classList.add("darken");
+    setTimeout(() => {
+        bgImage1.classList.remove("active");
+        bgImage2.classList.remove("active");
+        bgImage3.classList.remove("active");
+        bgImage4.classList.remove("active");
+        bgImage5.classList.add("active");
+        titleText.textContent = "謎題三 · 七徵破四義";
+        currentScene = 4;
+        setTimeout(() => {
+            transitionOverlay.classList.remove("darken");
+            setTimeout(() => {
+                activeDialogues = sideChapelEntryDialogues;
+                currentLine = 0;
+                dialogueFinished = false;
+                dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+                sfxPaper();
+                vibrate(10);
+                showDialogue(0);
+            }, 800);
+        }, 300);
+    }, 500);
+}
+
+// ============================================================
+// 对话系统
+// ============================================================
+const scene1Dialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "（腳步聲由遠及近）……到了。前面就是大堂前地。", sfx: "footsteps" },
+    { speaker: "zhujiao", name: "主角", text: "澳門主教座堂，當地人叫「大堂」。鄭一手札裡寫的「王者為堂，堂前接貨」——就是這裡。" },
+    { speaker: "elena", name: "艾蓮娜", text: "嘉慶年間這裡是葡人管轄區，官府勢力進不來……紅旗幫選這裡做中轉，確實聰明。" },
+    { speaker: "zhujiao", name: "主角", text: "手札還說「堂前三器，各藏一數」。寶藏線索拆成了三份，藏在教堂深處，由外而內次第破解。", glow: true },
+    { speaker: "elena", name: "艾蓮娜", text: "那第一關在哪？" },
+    { speaker: "zhujiao", name: "主角", text: "先從門口開始——你看那四扇門，上方的彩色玻璃畫的是什麼？" },
+    { speaker: "elena", name: "艾蓮娜", text: "人、獅、牛、鷹……這是四活物？" },
+    { speaker: "zhujiao", name: "主角", text: "沒錯。四活物分別對應馬太、馬可、路加、約翰四卷福音書。鄭一把第一關設在這裡了。", highlight: true }
+];
+
+const scene2Dialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "四活物對應四卷福音書……馬太、馬可、路加、約翰。問題是，是如何對應的？" },
+    { speaker: "zhujiao", name: "主角", text: "這是基督教古老的傳統——人象徵耶穌的人性，對應馬太28章；獅子象徵祂的君王能力，對應馬可16章；牛是祭物，象徵祂的祭司身分，對應路加24章；鷹飛翔高天，象徵祂的神性，對應約翰21章。" },
+    { speaker: "zhujiao", name: "主角", text: "但光知道四卷福音的章數還不夠，得知道取哪兩卷、怎麼取。", glow: true },
+    { speaker: "elena", name: "艾蓮娜", text: "取哪兩卷？線索在哪？" },
+    { speaker: "zhujiao", name: "主角", text: "你看門前那尊米迦勒銅像——他高舉的聖劍，還有腳下惡龍的翅膀。手札說「天使所持之數取卷，惡龍所翼之數取卷」。", highlight: true },
+    { speaker: "elena", name: "艾蓮娜", text: "也就是說……聖劍的數量告訴我們取第幾卷，惡龍翅膀的數量告訴我們取另一卷？" }
+];
+
+const scene3Dialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "（壓低聲音）這就是主祭壇了……好安靜。", sfx: "footsteps" },
+    { speaker: "zhujiao", name: "主角", text: "你看祭壇上方那扇半圓彩窗——鄭一手札說，第二件聖器的線索就藏在那裡。" },
+    { speaker: "elena", name: "艾蓮娜", text: "又是彩窗？這扇看起來比門口那四扇古老得多。" },
+    { speaker: "zhujiao", name: "主角", text: "先看看再說。" }
+];
+
+// 側堂進入對話（畫面1）
+const sideChapelEntryDialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "……到了。這就是側堂。" }
+];
+
+let activeDialogues = scene1Dialogues;
+let currentLine = 0;
+let isTyping = false;
+let typeTimer = null;
+let dialogueFinished = false;
+
+const dialogueBox = document.getElementById("dialogueBox");
+const speakerNameEl = document.getElementById("speakerName");
+const dialogueTextEl = document.getElementById("dialogueText");
+const continueHint = document.getElementById("continueHint");
+
+function showDialogue(index) {
+    if (index >= activeDialogues.length) {
+        finishDialogues();
+        return;
+    }
+    const line = activeDialogues[index];
+    speakerNameEl.textContent = line.name;
+    speakerNameEl.className = "speaker-name " + line.speaker;
+    dialogueTextEl.innerHTML = "";
+    continueHint.style.display = "none";
+    dialogueBox.classList.remove("glow");
+
+    if (line.sfx === "footsteps") sfxFootsteps();
+    if (line.sfx === "door") { sfxFootsteps(); setTimeout(sfxDoorCreak, 300); }
+    if (line.glow) {
+        setTimeout(() => {
+            dialogueBox.classList.add("glow");
+            sfxMetalChime();
+            vibrate([15, 30, 15]);
+        }, 300);
+    }
+    if (line.highlight) {
+        setTimeout(() => {
+            if (currentScene === 1) {
+                entranceHighlight.classList.add("flash");
+            } else {
+                statueHighlight.classList.add("flash");
+            }
+            sfxGlass();
+            setTimeout(() => {
+                entranceHighlight.classList.remove("flash");
+                statueHighlight.classList.remove("flash");
+            }, 900);
+        }, 500);
+    }
+
+    isTyping = true;
+    let charIndex = 0;
+    const text = line.text;
+    clearInterval(typeTimer);
+    typeTimer = setInterval(() => {
+        if (charIndex < text.length) {
+            dialogueTextEl.innerHTML = text.substring(0, charIndex + 1) + '<span class="dialogue-cursor"></span>';
+            charIndex++;
+            if (charIndex % 3 === 0) sfxWoodTick();
+        } else {
+            clearInterval(typeTimer);
+            isTyping = false;
+            dialogueTextEl.innerHTML = text;
+            continueHint.style.display = "block";
+        }
+    }, 40);
+}
+
+function completeTyping() {
+    clearInterval(typeTimer);
+    const line = activeDialogues[currentLine];
+    dialogueTextEl.innerHTML = line.text;
+    isTyping = false;
+    continueHint.style.display = "block";
+}
+
+dialogueBox.addEventListener("click", () => {
+    if (typeof isInObserveDialogue !== 'undefined' && isInObserveDialogue) return;
+    initAudio();
+    if (isTyping) { completeTyping(); return; }
+    currentLine++;
+    showDialogue(currentLine);
+});
+
+// ============================================================
+// 底部功能按钮
+// ============================================================
+const actionContainer = document.getElementById("actionContainer");
+const enterChurchBtn = document.getElementById("enterChurchBtn");
+const journalBtn1 = document.getElementById("journalBtn1");
+const observeGlassBtn = document.getElementById("observeGlassBtn");
+const observeStatueBtn = document.getElementById("observeStatueBtn");
+const inputCodeBtn = document.getElementById("inputCodeBtn");
+const journalBtn2 = document.getElementById("journalBtn2");
+const observeWindowBtn = document.getElementById("observeWindowBtn");
+const observePlaqueBtn = document.getElementById("observePlaqueBtn");
+const inputCodeBtn3 = document.getElementById("inputCodeBtn3");
+const journalBtn3 = document.getElementById("journalBtn3");
+
+function showScene1Buttons() {
+    actionContainer.classList.add("active");
+    enterChurchBtn.style.display = "";
+    journalBtn1.style.display = "";
+    observeGlassBtn.style.display = "none";
+    observeStatueBtn.style.display = "none";
+    inputCodeBtn.style.display = "none";
+    journalBtn2.style.display = "none";
+    const btns = [enterChurchBtn, journalBtn1];
+    btns.forEach((btn, i) => {
+        setTimeout(() => {
+            btn.classList.add("show");
+            if (i === 0) { sfxWoodClack(); vibrate(20); }
+        }, 200 + i * 100);
+    });
+}
+
+function showScene2Buttons() {
+    actionContainer.classList.add("active");
+    enterChurchBtn.style.display = "none";
+    journalBtn1.style.display = "none";
+    observeGlassBtn.style.display = "none";
+    observeStatueBtn.style.display = "none";
+    inputCodeBtn.style.display = "";
+    journalBtn2.style.display = "";
+    inputCodeBtn.disabled = false;
+    const btns = [inputCodeBtn, journalBtn2];
+    btns.forEach((btn, i) => {
+        setTimeout(() => {
+            btn.classList.add("show");
+            if (i === 0) { sfxWoodClack(); vibrate(20); }
+        }, 200 + i * 100);
+    });
+}
+
+function showScene3Buttons() {
+    actionContainer.classList.add("active");
+    enterChurchBtn.style.display = "none";
+    journalBtn1.style.display = "none";
+    observeGlassBtn.style.display = "none";
+    observeStatueBtn.style.display = "none";
+    inputCodeBtn.style.display = "none";
+    journalBtn2.style.display = "none";
+    observeWindowBtn.style.display = "";
+    observePlaqueBtn.style.display = "none";
+    inputCodeBtn3.style.display = "none";
+    journalBtn3.style.display = "";
+    const btns = [observeWindowBtn, journalBtn3];
+    btns.forEach((btn, i) => {
+        setTimeout(() => {
+            btn.classList.add("show");
+            if (i === 0) { sfxWoodClack(); vibrate(20); }
+        }, 200 + i * 100);
+    });
+}
+
+// 按钮悬停
+[enterChurchBtn, journalBtn1, observeGlassBtn, observeStatueBtn, inputCodeBtn, journalBtn2, observeWindowBtn, observePlaqueBtn, inputCodeBtn3, journalBtn3].forEach(btn => {
+    btn.addEventListener("mouseenter", () => { initAudio(); sfxButtonHover(); });
+});
+
+// 进入教堂 → 场景2
+enterChurchBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    vibrate([30, 40, 20]);
+    actionContainer.classList.remove("active");
+    document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("show"));
+    activeDialogues = scene2Dialogues;
+    currentLine = 0;
+    dialogueFinished = false;
+    switchScene(2);
+    setTimeout(() => { sfxFootsteps(); }, 400);
+    setTimeout(() => { sfxDoorCreak(); }, 900);
+    setTimeout(() => {
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        vibrate(10);
+        showDialogue(0);
+    }, 1800);
+});
+
+// 手札（两个场景共用）
+function openJournal() {
+    initAudio();
+    sfxButtonPress();
+    document.getElementById("journalModal").classList.add("active");
+}
+journalBtn1.addEventListener("click", openJournal);
+journalBtn2.addEventListener("click", openJournal);
+journalBtn3.addEventListener("click", openJournal);
+
+// ============================================================
+// 场景3：彩窗观察（选择观察项→触发对话）
+// ============================================================
+const windowObserveModal = document.getElementById("windowObserveModal");
+const windowKnowledgeModal = document.getElementById("windowKnowledgeModal");
+const observeProgress = document.getElementById("observeProgress");
+const observeOptions = document.getElementById("observeOptions");
+const observeCloseBtn = document.getElementById("observeCloseBtn");
+let windowObserved = false;
+let observedItems = [];
+let currentObserveDialogues = null;
+let currentObserveLine = 0;
+let isInObserveDialogue = false;
+
+const caesarVictoryDialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "NOT JESUS……MARIA……不是耶穌，是瑪利亞！" },
+    { speaker: "zhujiao", name: "主角", text: "和彩窗的線索完全吻合。這扇窗畫的是誕生的聖母，不是耶穌。" },
+    { speaker: "elena", name: "艾蓮娜", text: "誕生的聖母……手札上寫的「堂側黃牆之下，有聖母無染原罪，足下踏蛇，手中傾恩」，就是指側堂那尊聖母像？" },
+    { speaker: "zhujiao", name: "主角", text: "沒錯。主祭壇的彩窗和銘牌只是兩層驗證，真正的寶藏方位，還要往側堂找。" },
+    { speaker: "elena", name: "艾蓮娜", text: "走，去側堂看看那尊聖母像。" },
+    { speaker: "zhujiao", name: "主角", text: "（腳步聲轉向側廊，燭光搖曳中，一道淡黃色的牆隱隱可見……）" }
+];
+
+const windowObservations = [
+    {
+        id: "infant",
+        label: "觀察聖嬰",
+        dialogues: [
+            { speaker: "zhujiao", name: "主角", text: "這個聖嬰……頭上戴著冠冕。" },
+            { speaker: "elena", name: "艾蓮娜", text: "耶穌聖嬰不是應該在馬槽裡，不戴冠冕的嗎？" },
+            { speaker: "zhujiao", name: "主角", text: "的確有點奇怪。王冠是「天地元后」的標誌……" }
+        ]
+    },
+    {
+        id: "doves",
+        label: "觀察白鴿",
+        dialogues: [
+            { speaker: "zhujiao", name: "主角", text: "外圈的白鴿……一、二、三、四、五、六、七，七只。" },
+            { speaker: "elena", name: "艾蓮娜", text: "七只白鴿……為什麼是七？" },
+            { speaker: "zhujiao", name: "主角", text: "七是聖靈七恩的數字。先記下來。" }
+        ]
+    },
+    {
+        id: "angels",
+        label: "觀察天使",
+        dialogues: [
+            { speaker: "zhujiao", name: "主角", text: "內圈……白鴿上方一位，四周四位，共五位小天使。" },
+            { speaker: "elena", name: "艾蓮娜", text: "五位？五和七……這兩個數字一定有意義。" },
+            { speaker: "zhujiao", name: "主角", text: "五位天使對應聖母五喜樂，七只白鴿對應聖靈七恩。" }
+        ]
+    },
+    {
+        id: "holyspirit",
+        label: "觀察聖靈白鴿",
+        dialogues: [
+            { speaker: "zhujiao", name: "主角", text: "聖嬰正上方是一隻展翅白鴿——聖靈的象徵，被金色光芒環繞。" },
+            { speaker: "elena", name: "艾蓮娜", text: "耶穌誕生的畫裡，聖靈通常不出現吧？" },
+            { speaker: "zhujiao", name: "主角", text: "嗯，聖靈在耶穌受洗時才降臨。這構圖更像是……" }
+        ]
+    }
+];
+
+function renderObserveOptions() {
+    observeProgress.textContent = "已觀察 " + observedItems.length + " / " + windowObservations.length + " 處";
+    observeOptions.innerHTML = "";
+    windowObservations.forEach((item, i) => {
+        const btn = document.createElement("button");
+        btn.className = "quiz-option";
+        const isObserved = observedItems.includes(item.id);
+        btn.textContent = (isObserved ? "✓ " : "") + item.label;
+        if (isObserved) {
+            btn.style.opacity = "0.6";
+            btn.style.background = "linear-gradient(180deg, #d4edda, #a8d5b0)";
+        }
+        btn.addEventListener("click", () => handleObserveSelect(item));
+        observeOptions.appendChild(btn);
+    });
+    observeCloseBtn.style.display = "none";
+}
+
+function handleObserveSelect(item) {
+    if (isInObserveDialogue) return;
+    initAudio();
+    sfxButtonPress();
+    vibrate(15);
+    windowObserveModal.classList.remove("active");
+    setTimeout(() => {
+        if (!observedItems.includes(item.id)) {
+            observedItems.push(item.id);
+        }
+        currentObserveDialogues = item.dialogues;
+        currentObserveLine = 0;
+        isInObserveDialogue = true;
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        showObserveDialogue(0);
+    }, 400);
+}
+
+function showObserveDialogue(index) {
+    if (index >= currentObserveDialogues.length) {
+        finishObserveDialogue();
+        return;
+    }
+    const line = currentObserveDialogues[index];
+    speakerNameEl.textContent = line.name;
+    speakerNameEl.className = "speaker-name " + line.speaker;
+    dialogueTextEl.textContent = "";
+    continueHint.style.display = "none";
+    isTyping = true;
+    let charIndex = 0;
+    if (typeTimer) clearInterval(typeTimer);
+    typeTimer = setInterval(() => {
+        if (charIndex < line.text.length) {
+            dialogueTextEl.textContent += line.text[charIndex];
+            charIndex++;
+        } else {
+            clearInterval(typeTimer);
+            isTyping = false;
+            continueHint.style.display = "block";
+        }
+    }, 40);
+}
+
+function finishObserveDialogue() {
+    dialogueBox.classList.remove("visible");
+    isInObserveDialogue = false;
+    // 全部观察完 → 直接完成，返回祭坛解锁铭牌
+    if (observedItems.length === windowObservations.length) {
+        windowObserved = true;
+        setTimeout(() => returnToAltar(), 500);
+        return;
+    }
+    setTimeout(() => {
+        windowObserveModal.classList.add("active");
+        sfxPanel();
+        renderObserveOptions();
+    }, 400);
+}
+
+// 对话框点击（观察对话模式）
+let caesarKnowledgeShown = false;
+dialogueBox.addEventListener("click", () => {
+    if (isInObserveDialogue) {
+        initAudio();
+        if (isTyping) {
+            if (typeTimer) clearInterval(typeTimer);
+            dialogueTextEl.textContent = currentObserveDialogues[currentObserveLine].text;
+            isTyping = false;
+            continueHint.style.display = "block";
+            return;
+        }
+        // 凯撒解码对话第2句后弹出知识卡
+        if (currentObserveDialogues === caesarVictoryDialogues &&
+            currentObserveLine === 1 && !caesarKnowledgeShown) {
+            caesarKnowledgeShown = true;
+            windowKnowledgeModal.classList.add("active");
+            sfxPaper();
+            vibrate(20);
+            return;
+        }
+        currentObserveLine++;
+        showObserveDialogue(currentObserveLine);
+        return;
+    }
+});
+
+observeWindowBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    vibrate(20);
+    bgImage3.classList.remove("active");
+    bgImage4.classList.add("active");
+    titleText.textContent = "觀察・聖母誕辰窗";
+    actionContainer.classList.remove("active");
+    document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("show"));
+    observedItems = [];
+    setTimeout(() => {
+        windowObserveModal.classList.add("active");
+        sfxPanel();
+        renderObserveOptions();
+    }, 600);
+});
+
+document.getElementById("knowledgeCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    windowKnowledgeModal.classList.remove("active");
+    showToast("知識卡已收入手札");
+    sfxMetalChime();
+});
+
+function returnToAltar() {
+    bgImage4.classList.remove("active");
+    bgImage3.classList.add("active");
+    titleText.textContent = "謎題二 · 聖母誕辰窗";
+    setTimeout(() => {
+        if (windowObserved) {
+            observeWindowBtn.style.display = "none";
+            observePlaqueBtn.style.display = "";
+            inputCodeBtn3.style.display = "none";
+            journalBtn3.style.display = "";
+            actionContainer.classList.add("active");
+            const btns = [observePlaqueBtn, journalBtn3];
+            btns.forEach((btn, i) => {
+                setTimeout(() => {
+                    btn.classList.add("show");
+                    if (i === 0) { sfxWoodClack(); vibrate(20); }
+                }, 200 + i * 100);
+            });
+        } else {
+            showScene3Buttons();
+        }
+    }, 500);
+}
+
+// ============================================================
+// 场景3：古老铭牌 & 凯撒密码解码器
+// ============================================================
+const plaqueModal = document.getElementById("plaqueModal");
+const caesarModal = document.getElementById("caesarModal");
+const caesarKeys = [0, 0];
+const caesarCiphertexts = ["UVA QLZBZ", "RFWNF"];
+let caesarSolved = false;
+
+function caesarDecrypt(text, shift) {
+    let result = "";
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c >= 'A' && c <= 'Z') {
+            result += String.fromCharCode(((c.charCodeAt(0) - 65 - shift + 26) % 26) + 65);
+        } else {
+            result += c;
+        }
+    }
+    return result;
+}
+
+function updateCaesarDisplay(line) {
+    const key = caesarKeys[line];
+    document.getElementById("caesarKey" + line).textContent = key;
+    const decrypted = caesarDecrypt(caesarCiphertexts[line], key);
+    document.getElementById("caesarResult" + line).textContent = decrypted;
+
+    // Check if both are correct
+    const r0 = caesarDecrypt(caesarCiphertexts[0], caesarKeys[0]);
+    const r1 = caesarDecrypt(caesarCiphertexts[1], caesarKeys[1]);
+    const correct = (r0 === "NOT JESUS" && r1 === "MARIA");
+    const verifyBtn = document.getElementById("caesarVerifyBtn");
+    const feedback = document.getElementById("caesarFeedback");
+
+    if (correct && !caesarSolved) {
+        verifyBtn.style.display = "block";
+        feedback.textContent = "兩行都解讀出有意義的文字……";
+        feedback.style.color = "#2a6a3a";
+        sfxGlassDing();
+        vibrate([20, 30, 20]);
+    } else if (!correct) {
+        verifyBtn.style.display = "none";
+        feedback.textContent = "";
+    }
+}
+
+document.querySelectorAll(".caesar-wheel-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        initAudio();
+        sfxWoodTick();
+        vibrate(10);
+        const line = parseInt(btn.dataset.line);
+        const dir = parseInt(btn.dataset.dir);
+        caesarKeys[line] = (caesarKeys[line] + dir + 26) % 26;
+        updateCaesarDisplay(line);
+    });
+});
+
+observePlaqueBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    vibrate(20);
+    plaqueModal.classList.add("active");
+    sfxPaper();
+});
+
+document.getElementById("plaqueCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    plaqueModal.classList.remove("active");
+});
+
+document.getElementById("plaqueDecodeBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    plaqueModal.classList.remove("active");
+    setTimeout(() => {
+        caesarModal.classList.add("active");
+        sfxPanel();
+        caesarKeys[0] = 0;
+        caesarKeys[1] = 0;
+        updateCaesarDisplay(0);
+        updateCaesarDisplay(1);
+        document.getElementById("caesarVerifyBtn").style.display = "none";
+        document.getElementById("caesarFeedback").textContent = "";
+    }, 300);
+});
+
+document.getElementById("caesarCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    caesarModal.classList.remove("active");
+    setTimeout(() => {
+        plaqueModal.classList.add("active");
+    }, 300);
+});
+
+document.getElementById("caesarVerifyBtn").addEventListener("click", () => {
+    initAudio();
+    sfxSuccess();
+    vibrate([30, 50, 30]);
+    caesarSolved = true;
+    caesarModal.classList.remove("active");
+
+    setTimeout(() => {
+        caesarKnowledgeShown = false;
+        currentObserveDialogues = caesarVictoryDialogues;
+        currentObserveLine = 0;
+        isInObserveDialogue = true;
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        showObserveDialogue(0);
+
+        // 对话结束后 → 下一幕过渡（侧堂·圣母无原罪像）
+        const originalFinish = finishObserveDialogue;
+        finishObserveDialogue = function() {
+            dialogueBox.classList.remove("visible");
+            isInObserveDialogue = false;
+            setTimeout(() => {
+                transitionOverlay.classList.add("darken");
+                setTimeout(() => {
+                    document.getElementById("victoryTitle").textContent = "下一幕";
+                    document.getElementById("victorySubtitle").textContent = "側堂 · 聖母無原罪像";
+                    document.getElementById("victoryModal").classList.add("active");
+                }, 1200);
+            }, 500);
+            finishObserveDialogue = originalFinish;
+        };
+    }, 500);
+});
+
+document.getElementById("journalCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    document.getElementById("journalModal").classList.remove("active");
+});
+
+// ============================================================
+// 彩窗观察弹窗
+// ============================================================
+const glassModal = document.getElementById("glassModal");
+let glassObserved = false;
+
+observeGlassBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    sfxGlass();
+    glassModal.classList.add("active");
+});
+
+document.getElementById("glassCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    glassModal.classList.remove("active");
+    if (!glassObserved) {
+        glassObserved = true;
+        showToast("彩窗線索已記錄");
+        updateInputCodeButton();
+    }
+});
+
+function showGlassDetail(idx) {
+    initAudio();
+    sfxGlassDing();
+    vibrate(10);
+    const volumes = ["第1卷", "第2卷", "第3卷", "第4卷"];
+    const names = ["人(天使)·馬太", "有翼獅·馬可", "有翼牛·路加", "雄鷹·約翰"];
+    const chapters = ["28章", "16章", "24章", "21章"];
+    document.getElementById("glassHint").textContent = volumes[idx] + " " + names[idx] + " — " + chapters[idx];
+}
+
+// ============================================================
+// 铜像观察弹窗
+// ============================================================
+const statueModal = document.getElementById("statueModal");
+const statueDetail = document.getElementById("statueDetail");
+const statueStatus = document.getElementById("statueStatus");
+let swordFound = false;
+let dragonFound = false;
+
+observeStatueBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    sfxMetalChime();
+    statueModal.classList.add("active");
+});
+
+document.getElementById("statueCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    statueModal.classList.remove("active");
+    if (swordFound && dragonFound) {
+        showToast("銅像線索已記錄");
+        updateInputCodeButton();
+    }
+});
+
+function examineHotspot(type) {
+    initAudio();
+    if (type === "sword") {
+        if (!swordFound) {
+            swordFound = true;
+            document.getElementById("hotspotSword").classList.add("found");
+            document.getElementById("hotspotSword").textContent = "✓";
+        }
+        sfxMetalChime();
+        vibrate(15);
+        statueDetail.innerHTML = '米迦勒右手高舉 <span class="num">1</span> 把聖劍。<br><span style="font-size:12px;color:#7a5c2e;">→ 天使所持之數 = 1</span>';
+    } else if (type === "dragon") {
+        if (!dragonFound) {
+            dragonFound = true;
+            document.getElementById("hotspotDragon").classList.add("found");
+            document.getElementById("hotspotDragon").textContent = "✓";
+        }
+        sfxKeyPress();
+        vibrate(15);
+        statueDetail.innerHTML = '惡龍背生 <span class="num">2</span> 隻蝙蝠狀翅膀。<br><span style="font-size:12px;color:#7a5c2e;">→ 惡龍所翼之數 = 2</span>';
+    }
+    const found = (swordFound ? 1 : 0) + (dragonFound ? 1 : 0);
+    statueStatus.textContent = "已發現 " + found + "/2 處線索";
+    if (found === 2) {
+        statueStatus.textContent = "線索收集完畢！關閉後可輸入暗碼";
+        statueStatus.style.color = "#2d7a2d";
+    }
+}
+
+// ============================================================
+// 密码输入面板
+// ============================================================
+const passwordModal = document.getElementById("passwordModal");
+const passwordHintBtn = document.getElementById("passwordHintBtn");
+const passwordHintText = document.getElementById("passwordHintText");
+let passwordInput = "";
+let wrongCount = 0;
+let puzzleSolved = false;
+
+function updateInputCodeButton() {
+    if (glassObserved && swordFound && dragonFound && !puzzleSolved) {
+        inputCodeBtn.disabled = false;
+    }
+}
+
+inputCodeBtn.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    passwordInput = "";
+    updatePasswordSlots();
+    passwordHintText.classList.remove("show");
+    passwordModal.classList.add("active");
+});
+
+inputCodeBtn3.addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    passwordInput = "";
+    updatePasswordSlots();
+    passwordHintText.classList.remove("show");
+    passwordModal.classList.add("active");
+});
+
+function pressKey(key) {
+    initAudio();
+    if (key === "del") {
+        sfxKeyPress();
+        passwordInput = passwordInput.slice(0, -1);
+    } else if (key === "ok") {
+        if (passwordInput.length === 4) {
+            checkPassword();
+        } else {
+            sfxError();
+            vibrate([80, 40, 80]);
+            shakeSlots();
+        }
+        return;
+    } else {
+        if (passwordInput.length < 4) {
+            sfxKeyPress();
+            vibrate(8);
+            passwordInput += key;
+        }
+    }
+    updatePasswordSlots();
+}
+
+function updatePasswordSlots() {
+    for (let i = 0; i < 4; i++) {
+        document.getElementById("slot" + i).textContent = passwordInput[i] || "_";
+    }
+}
+
+function shakeSlots() {
+    for (let i = 0; i < 4; i++) {
+        const slot = document.getElementById("slot" + i);
+        slot.classList.add("shake");
+        setTimeout(() => slot.classList.remove("shake"), 400);
+    }
+}
+
+function checkPassword() {
+    const correctAnswer = (currentScene === 3) ? "2824" : "2816";
+    if (passwordInput === correctAnswer) {
+        // 正确
+        sfxSuccess();
+        vibrate([30, 50, 30, 50, 60]);
+        passwordModal.classList.remove("active");
+        puzzleSolved = true;
+        if (currentScene === 2) {
+            inputCodeBtn.disabled = true;
+            setTimeout(() => triggerVictory(), 500);
+        } else {
+            inputCodeBtn3.disabled = true;
+            setTimeout(() => triggerScene3Victory(), 500);
+        }
+    } else {
+        // 错误
+        sfxError();
+        vibrate([80, 40, 80]);
+        shakeSlots();
+        wrongCount++;
+        passwordInput = "";
+        updatePasswordSlots();
+        if (wrongCount >= 3) {
+            passwordHintBtn.style.display = "block";
+        }
+        if (wrongCount >= 5) {
+            if (currentScene === 3) {
+                showToast("提示：5位天使-4=1→馬太28章；7只白鴿-4=3→路加24章；章數相連即暗碼");
+            } else {
+                showToast("提示：聖劍1把→第1卷馬太28章；惡龍翅膀2隻→第2卷馬可16章；章數相連即暗碼");
+            }
+        }
+    }
+}
+
+function showPasswordHint() {
+    initAudio();
+    sfxButtonPress();
+    let hints;
+    if (currentScene === 3) {
+        hints = [
+            "5位天使 - 4 = 1",
+            "7只白鴿 - 4 = 3",
+            "第1卷馬太28章",
+            "第3卷路加24章",
+            "兩卷章數直接相連",
+            "答案：2824"
+        ];
+    } else {
+        hints = [
+            "聖劍1把→取第1卷福音書",
+            "惡龍翅膀2隻→取第2卷福音書",
+            "第1卷馬太28章",
+            "第2卷馬可16章",
+            "兩卷章數直接相連",
+            "答案：2816"
+        ];
+    }
+    const idx = Math.min(wrongCount - 3, hints.length - 1);
+    passwordHintText.textContent = hints[idx];
+    passwordHintText.classList.add("show");
+}
+
+// ============================================================
+// 通关动效
+// ============================================================
+const fragmentCard = document.getElementById("fragmentCard");
+
+function triggerVictory() {
+    // 彩窗发光
+    glassGlow.classList.add("active");
+    sfxVictory();
+    vibrate([50, 30, 50, 30, 50, 30, 80]);
+
+    setTimeout(() => {
+        // 碎片卡出现
+        fragmentCard.classList.add("show");
+        sfxMetalChime();
+    }, 800);
+
+    setTimeout(() => {
+        // 碎片卡消失
+        fragmentCard.classList.remove("show");
+        glassGlow.classList.remove("active");
+    }, 3000);
+
+    setTimeout(() => {
+        // 通关对话
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        activeDialogues = victoryDialogues;
+        currentLine = 0;
+        dialogueFinished = false;
+        pendingSceneTransition = 3;
+        showDialogue(0);
+    }, 3500);
+}
+
+const victoryDialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "四扇彩窗同時亮了……光在地上拼出了一個「門」字！" },
+    { speaker: "zhujiao", name: "主角", text: "第一個暗碼到手——2816，門。收好，往教堂深處走，找第二件聖器。" },
+    { speaker: "elena", name: "艾蓮娜", text: "（腳步聲漸遠，木門吱呀推開……）" }
+];
+
+const scene3VictoryDialogues = [
+    { speaker: "elena", name: "艾蓮娜", text: "2824……馬太28章，路加24章。兩卷都在說復活。" },
+    { speaker: "zhujiao", name: "主角", text: "2816是「門」，2824是「復活」……鄭一把寶藏線索藏在聖經的章數裡。" },
+    { speaker: "elena", name: "艾蓮娜", text: "門與復活……主祭壇的兩道暗碼都解讀完了。但手札上好像還有一處標註……" },
+    { speaker: "zhujiao", name: "主角", text: "（翻閱手札）你看這裡——「堂側黃牆之下，有聖母無染原罪，足下踏蛇，手中傾恩。」" },
+    { speaker: "elena", name: "艾蓮娜", text: "黃牆……教堂西側那間小堂？供奉無原罪聖母的地方？" },
+    { speaker: "zhujiao", name: "主角", text: "沒錯。主祭壇的兩道暗碼只是驗證，真正的寶藏方位，還要往側堂找。" },
+    { speaker: "elena", name: "艾蓮娜", text: "走，去側堂看看那尊聖母像。" },
+    { speaker: "zhujiao", name: "主角", text: "（腳步聲轉向側廊，燭光搖曳中，一道淡黃色的牆隱隱可見……）" }
+];
+
+let isVictoryEnding = false;
+
+function triggerScene3Victory() {
+    sfxVictory();
+    vibrate([50, 30, 50, 30, 50, 30, 80]);
+
+    setTimeout(() => {
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        activeDialogues = scene3VictoryDialogues;
+        currentLine = 0;
+        dialogueFinished = false;
+        pendingSceneTransition = null;
+        isVictoryEnding = true;
+        showDialogue(0);
+    }, 800);
+}
+
+let pendingSceneTransition = null;
+
+function finishDialogues() {
+    dialogueBox.classList.remove("visible");
+    dialogueFinished = true;
+    if (currentScene === 4) {
+        transitionOverlay.classList.add("darken");
+        setTimeout(() => {
+            document.querySelectorAll('.bg-image').forEach(el => el.classList.remove('active'));
+            const tbar = document.querySelector('.top-title-bar');
+            if(tbar) tbar.classList.remove('show');
+            dialogueBox.classList.remove('visible');
+            window.location.href = "8.html";
+        }, 500);
+        return;
+    }
+    if (pendingSceneTransition) {
+        const target = pendingSceneTransition;
+        pendingSceneTransition = null;
+        setTimeout(() => {
+            switchScene(target);
+            if (target === 3) {
+                setTimeout(() => {
+                    activeDialogues = scene3Dialogues;
+                    currentLine = 0;
+                    dialogueFinished = false;
+                    dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+                    sfxPaper();
+                    vibrate(10);
+                    showDialogue(0);
+                }, 1500);
+            }
+        }, 500);
+        return;
+    }
+    setTimeout(() => {
+        if (isVictoryEnding) {
+            isVictoryEnding = false;
+            transitionOverlay.classList.add("darken");
+            setTimeout(() => {
+                document.getElementById("victoryTitle").textContent = "下一幕";
+                document.getElementById("victorySubtitle").textContent = "側堂 · 聖母無原罪像";
+                document.getElementById("victoryModal").classList.add("active");
+            }, 1200);
+            return;
+        }
+        if (currentScene === 1) {
+            showScene1Buttons();
+        } else if (currentScene === 2) {
+            showScene2Buttons();
+        } else if (currentScene === 3) {
+            showScene3Buttons();
+        }
+    }, 500);
+}
+
+// ============================================================
+// 返回
+// ============================================================
+document.getElementById("backBtn").addEventListener("click", () => {
+    initAudio();
+    sfxButtonPress();
+    document.getElementById("backModal").classList.add("active");
+});
+document.getElementById("backCancelBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    document.getElementById("backModal").classList.remove("active");
+});
+document.getElementById("backConfirmBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    window.location.href = "5-6-merged.html";
+});
+
+// 下一幕过渡 - 前往侧堂
+document.getElementById("victoryCloseBtn").addEventListener("click", () => {
+    sfxButtonPress();
+    document.getElementById("victoryModal").classList.remove("active");
+    enterSideChapel();
+});
+
+// ============================================================
+// 存档/读档
+// ============================================================
+const SAVE_KEY = "cathedral_chapter_save_v2";
+
+function saveGame() {
+    const data = {
+        chapter: 4,
+        scene: currentScene,
+        currentLine: currentLine,
+        dialogueFinished: dialogueFinished,
+        glassObserved: glassObserved,
+        swordFound: swordFound,
+        dragonFound: dragonFound,
+        puzzleSolved: puzzleSolved,
+        wrongCount: wrongCount,
+        timestamp: Date.now()
+    };
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+        showToast("進度已保存");
+        sfxMetalChime();
+    } catch(e) {
+        showToast("保存失敗");
+    }
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) { showToast("沒有存檔"); return; }
+        const data = JSON.parse(raw);
+
+        // 重置状态
+        actionContainer.classList.remove("active");
+        document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("show"));
+        dialogueBox.classList.remove("visible");
+        glassModal.classList.remove("active");
+        statueModal.classList.remove("active");
+        passwordModal.classList.remove("active");
+        fragmentCard.classList.remove("show");
+        glassGlow.classList.remove("active");
+
+        currentScene = data.scene || 1;
+        currentLine = data.currentLine || 0;
+        dialogueFinished = data.dialogueFinished || false;
+        glassObserved = data.glassObserved || false;
+        swordFound = data.swordFound || false;
+        dragonFound = data.dragonFound || false;
+        puzzleSolved = data.puzzleSolved || false;
+        wrongCount = data.wrongCount || 0;
+
+        // 恢复热区状态
+        if (swordFound) {
+            document.getElementById("hotspotSword").classList.add("found");
+            document.getElementById("hotspotSword").textContent = "✓";
+        }
+        if (dragonFound) {
+            document.getElementById("hotspotDragon").classList.add("found");
+            document.getElementById("hotspotDragon").textContent = "✓";
+        }
+        const found = (swordFound ? 1 : 0) + (dragonFound ? 1 : 0);
+        statueStatus.textContent = "已發現 " + found + "/2 處線索";
+
+        // 切换背景
+        if (currentScene === 1) {
+            bgImage2.classList.remove("active");
+            bgImage3.classList.remove("active");
+            bgImage1.classList.add("active");
+            titleText.textContent = "第四章 · 主座教堂";
+            activeDialogues = scene1Dialogues;
+        } else if (currentScene === 2) {
+            bgImage1.classList.remove("active");
+            bgImage3.classList.remove("active");
+            bgImage2.classList.add("active");
+            titleText.textContent = "謎題一 · 四活物彩窗";
+            activeDialogues = puzzleSolved ? victoryDialogues : scene2Dialogues;
+        } else if (currentScene === 3) {
+            bgImage1.classList.remove("active");
+            bgImage2.classList.remove("active");
+            bgImage3.classList.add("active");
+            titleText.textContent = "謎題二 · 聖母誕辰窗";
+            activeDialogues = scene3Dialogues;
+        }
+
+        // 恢复对话或按钮
+        if (dialogueFinished) {
+            if (currentScene === 1) showScene1Buttons();
+            else if (currentScene === 2) showScene2Buttons();
+            else if (currentScene === 3) showScene3Buttons();
+        } else {
+            dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+            showDialogue(currentLine);
+        }
+
+        if (puzzleSolved) inputCodeBtn.disabled = true;
+
+        showToast("存檔已讀取");
+        sfxMetalChime();
+    } catch(e) {
+        showToast("讀取失敗");
+    }
+}
+
+document.getElementById("saveBtn").addEventListener("click", () => { initAudio(); saveGame(); });
+document.getElementById("loadBtn").addEventListener("click", () => { initAudio(); loadGame(); });
+
+// ============================================================
+// Toast
+// ============================================================
+const toastEl = document.getElementById("toast");
+let toastTimer = null;
+function showToast(msg, duration) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), duration || 2000);
+}
+
+// ============================================================
+// 转场层
+// ============================================================
+const transitionOverlay = document.getElementById("transitionOverlay");
+
+// ============================================================
+// 初始化
+// ============================================================
+const topTitleBar = document.getElementById("topTitleBar");
+
+window.addEventListener("load", () => {
+    setTimeout(() => { bgImage1.classList.add("active"); bgImage1.style.cssText = 'opacity: 1 !important; transition: none !important;'; }, 100);
+    setTimeout(() => { topTitleBar.classList.add("show"); topTitleBar.style.opacity = "1"; }, 300);
+    setTimeout(() => {
+        initAudio();
+        sfxBell();
+        startAmbient();
+        scheduleDistantBell();
+    }, 800);
+    setTimeout(() => {
+        dialogueBox.classList.add("visible"); dialogueBox.style.cssText = 'transform: translateX(-50%) translateY(0) !important; transition: none !important;';
+        sfxPaper();
+        vibrate(10);
+        showDialogue(0);
+    }, 1200);
+});
+
+document.addEventListener("touchstart", initAudio, { once: true });
+document.addEventListener("click", initAudio, { once: true });
+</script>
+
+<!-- ====== 側堂謎題 ====== -->
+<div id="sideChapelPuzzle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1000;">
+
+<div id="game">
+
+  <!-- 背景：側堂聖母無原罪像 -->
+  <div class="bg-layer" id="bgLayer" style="background-image:url('cathedral_sidechapel.jpg');"></div>
+
+  <!-- 暗角 -->
+  <div class="vignette"></div>
+
+  <!-- 頂部標題欄 -->
+  <div class="top-bar" id="topBar">
+    <span class="spacer"></span>
+    <span class="title-text">謎題三 · 七徵破四義</span>
+    <span class="spacer"></span>
+  </div>
+
+  <!-- 對話框 -->
+  <div class="dialog-box" id="dlgBox">
+    <div class="speaker-row">
+      <span class="speaker-dot" id="dlgDot"></span>
+      <span class="speaker-name" id="dlgName"></span>
+    </div>
+    <div class="dialog-text" id="dlgText"></div>
+    <div class="dialog-hint" id="dlgHint" style="display:none;">▼ 點擊繼續</div>
+  </div>
+
+  <!-- 選擇菜單：象徵七徵 -->
+  <div class="choice-menu" id="choiceMenu">
+    <div class="choice-title">觀察選項</div>
+    <div class="choice-item" data-id="1">
+      <span class="num">①</span><span>觀察 A+M 符號</span><span class="check">✓</span>
+    </div>
+    <div class="choice-item" data-id="2">
+      <span class="num">②</span><span>觀察 雙手張開</span><span class="check">✓</span>
+    </div>
+    <div class="choice-item" data-id="3">
+      <span class="num">③</span><span>觀察 六根燭台</span><span class="check">✓</span>
+    </div>
+  </div>
+
+  <!-- 線索推理板：三徵交證 -->
+  <div class="reasoning-panel" id="reasoningPanel">
+    <div class="reasoning-title">三徵交證</div>
+    <div class="reasoning-sub">點擊線索卡回顧 → 選擇最終指向</div>
+    <div class="reasoning-cards">
+      <div class="rcard" data-clue="1">
+        <div class="rcard-head"><span class="ricon">①</span><span>A+M 符號</span></div>
+        <div class="rcard-desc">「在聖母保護之下」——線索不在像本身，在她護住的範圍內。</div>
+      </div>
+      <div class="reasoning-arrow">▼</div>
+      <div class="rcard" data-clue="2">
+        <div class="rcard-head"><span class="ricon">②</span><span>雙手張開</span></div>
+        <div class="rcard-desc">雙手張開向下——恩寵從她手中流向下方的祭台。</div>
+      </div>
+      <div class="reasoning-arrow">▼</div>
+      <div class="rcard" data-clue="3">
+        <div class="rcard-head"><span class="ricon">③</span><span>六根燭台</span></div>
+        <div class="rcard-desc">六燭對稱——整座教堂的中心是主祭壇。</div>
+      </div>
+    </div>
+    <div class="reasoning-question">三徵指向何處？</div>
+    <div class="reasoning-choices">
+      <div class="rchoice" data-answer="wrong">Ⓐ 側堂聖像腳下</div>
+      <div class="rchoice" data-answer="correct">Ⓑ 主祭壇祭台桌</div>
+      <div class="rchoice" data-answer="wrong">Ⓒ 教堂大門門檻</div>
+    </div>
+    <div class="reasoning-result" id="reasoningResult">✓ 三徵交證——指向主祭壇祭台桌</div>
+  </div>
+
+  <!-- 轉場遮罩 -->
+  <div class="transition-overlay" id="transOverlay"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ============================================================
+// 音頻系統（Web Audio，繞過自動播放限制）
+// ============================================================
+let sc_audioCtx = null;
+function initAudio(){
+  if(sc_audioCtx) return;
+  try{ sc_audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+document.addEventListener('pointerdown', initAudio, {once:true});
+
+function sfxWoodTick(){
+  if(!sc_audioCtx) return;
+  const o = sc_audioCtx.createOscillator();
+  const g = sc_audioCtx.createGain();
+  o.type = 'triangle'; o.frequency.value = 800;
+  g.gain.setValueAtTime(0.08, sc_audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, sc_audioCtx.currentTime + 0.05);
+  o.connect(g).connect(sc_audioCtx.destination);
+  o.start(); o.stop(sc_audioCtx.currentTime + 0.05);
+}
+function sfxPaper(){
+  if(!sc_audioCtx) return;
+  const bufferSize = sc_audioCtx.sampleRate * 0.15;
+  const buffer = sc_audioCtx.createBuffer(1, bufferSize, sc_audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize) * 0.3; }
+  const src = sc_audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = sc_audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 2000;
+  src.connect(filter).connect(sc_audioCtx.destination);
+  src.start();
+}
+function sfxFootsteps(){
+  if(!sc_audioCtx) return;
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const o = sc_audioCtx.createOscillator();
+      const g = sc_audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 120 + Math.random()*40;
+      g.gain.setValueAtTime(0.12, sc_audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, sc_audioCtx.currentTime + 0.12);
+      o.connect(g).connect(sc_audioCtx.destination);
+      o.start(); o.stop(sc_audioCtx.currentTime + 0.12);
+    }, i*200);
+  }
+}
+function vibrate(pattern){
+  if(navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ============================================================
+// 對話系統
+// ============================================================
+const dialogues = [
+  { speaker:"elena", name:"艾蓮娜", text:"（腳步聲停住）……到了。這就是側堂。", sfx:"footsteps" },
+  { speaker:"zhujiao", name:"主角", text:"黃牆、小天使、六根燭台……和手札上寫的一模一樣。" },
+  { speaker:"elena", name:"艾蓮娜", text:"這尊聖母像……雙手張開，腳下踩著蛇。感覺不單純是供奉。" },
+  { speaker:"zhujiao", name:"主角", text:"鄭一選這裡做接應點，一定有原因。先看看四周。" }
+];
+
+let sc_currentLine = 0;
+let sc_isTyping = false;
+let sc_typeTimer = null;
+
+// 觀察對話狀態
+let isInObserve = false;
+let currentObserveItem = null;
+let sc_currentObserveLine = 0;
+const observeDialogues = {
+  "1": [
+    { speaker:"zhujiao", name:"主角", text:"祭台正面……有個交織的A和M字母。" },
+    { speaker:"elena", name:"艾蓮娜", text:"A和M交織在一起……這是什麼記號？" },
+    { speaker:"zhujiao", name:"主角", text:"這是Auspice Maria——『在聖母保護之下』的意思。" },
+    { speaker:"elena", name:"艾蓮娜", text:"在聖母保護之下……也就是說，重要的不是像，而是她護住的東西？" },
+    { speaker:"zhujiao", name:"主角", text:"沒錯。鄭一用這個符號告誡後人——別盯著像看，看她護住的地方。" }
+  ],
+  "2": [
+    { speaker:"zhujiao", name:"主角", text:"她的雙手是張開的……不是祈禱的姿勢，像是在傾瀉什麼。" },
+    { speaker:"elena", name:"艾蓮娜", text:"傾瀉……你是說，神力不是附在像上，而是從她手中流向下方？" },
+    { speaker:"zhujiao", name:"主角", text:"對，流向下方——也就是祭台的位置。鄭一在暗示，東西在像的下方。" }
+  ],
+  "3": [
+    { speaker:"zhujiao", name:"主角", text:"左右各三根燭台，一共六根……它們把聖母像框在正中間。" },
+    { speaker:"elena", name:"艾蓮娜", text:"六根燭台左右對稱……它們不是在裝飾，而是在指出中心點？" },
+    { speaker:"zhujiao", name:"主角", text:"對，中心點——側堂的中心是這尊像，但整座教堂的中心，是主祭壇。" }
+  ]
+};
+
+const dlgBox = document.getElementById("dlgBox");
+const dlgDot = document.getElementById("dlgDot");
+const dlgName = document.getElementById("dlgName");
+const dlgText = document.getElementById("dlgText");
+const dlgHint = document.getElementById("dlgHint");
+
+function sc_showDialogue(index){
+  if(index >= dialogues.length){
+    sc_finishDialogues();
+    return;
+  }
+  const line = dialogues[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+
+  if(line.sfx === "footsteps") sfxFootsteps();
+
+  sc_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(sc_typeTimer);
+  sc_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(sc_typeTimer);
+      sc_isTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function completeTyping(){
+  clearInterval(sc_typeTimer);
+  let text;
+  if(inAltar){
+    text = altarDialogues[altarIdx].text;
+  } else if(inWrap){
+    text = wrapDialogues[wrapIdx].text;
+  } else if(isInObserve){
+    text = observeDialogues[currentObserveItem][sc_currentObserveLine].text;
+  } else {
+    text = dialogues[sc_currentLine].text;
+  }
+  dlgText.innerHTML = text;
+  sc_isTyping = false;
+  dlgHint.style.display = "block";
+}
+
+dlgBox.addEventListener("click", ()=>{
+  initAudio();
+  if(sc_isTyping){ completeTyping(); return; }
+  if(inAltar){
+    altarIdx++;
+    showAltarLine(altarIdx);
+    return;
+  }
+  if(inWrap){
+    wrapIdx++;
+    showWrapLine(wrapIdx);
+    return;
+  }
+  if(isInObserve){
+    sc_currentObserveLine++;
+    showObserveLine(sc_currentObserveLine);
+    return;
+  }
+  sc_currentLine++;
+  sc_showDialogue(sc_currentLine);
+});
+
+function sc_finishDialogues(){
+  dlgBox.classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("choiceMenu").classList.add("show");
+    sfxPaper();
+    vibrate(10);
+  }, 400);
+}
+
+// ===== 觀察對話系統 =====
+function startObserve(itemId){
+  if(!observeDialogues[itemId]) return false;
+  isInObserve = true;
+  currentObserveItem = itemId;
+  sc_currentObserveLine = 0;
+  document.getElementById("choiceMenu").classList.remove("show");
+  setTimeout(()=>{
+    dlgBox.classList.add("show");
+    sfxPaper();
+    vibrate(10);
+    showObserveLine(0);
+  }, 350);
+  return true;
+}
+
+function showObserveLine(index){
+  const lines = observeDialogues[currentObserveItem];
+  if(index >= lines.length){
+    finishObserve();
+    return;
+  }
+  const line = lines[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+  sc_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(sc_typeTimer);
+  sc_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(sc_typeTimer);
+      sc_isTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function finishObserve(){
+  isInObserve = false;
+  dlgBox.classList.remove("show");
+  const item = document.querySelector('.choice-item[data-id="' + currentObserveItem + '"]');
+  if(item) item.classList.add("observed");
+  currentObserveItem = null;
+  const remaining = document.querySelectorAll('.choice-item:not(.observed)');
+  setTimeout(()=>{
+    if(remaining.length === 0){
+      document.getElementById("reasoningPanel").classList.add("show");
+      sfxPaper();
+    } else {
+      document.getElementById("choiceMenu").classList.add("show");
+      sfxPaper();
+    }
+  }, 400);
+}
+
+// 選擇菜單點擊
+document.querySelectorAll(".choice-item").forEach(item=>{
+  item.addEventListener("click", ()=>{
+    initAudio();
+    if(item.classList.contains("observed")){
+      showToast("已觀察過");
+      return;
+    }
+    const id = item.dataset.id;
+    if(!startObserve(id)){
+      const names = {
+        "1":"A+M 符號","2":"雙手張開","3":"六根燭台"
+      };
+      showToast("觀察「" + names[id] + "」（後續畫面開發中）");
+    }
+  });
+});
+
+// ===== 線索推理板交互 =====
+document.querySelectorAll(".rcard").forEach(card=>{
+  card.addEventListener("click", ()=>{
+    initAudio();
+    card.classList.toggle("opened");
+    sfxPaper();
+  });
+});
+
+document.querySelectorAll(".rchoice").forEach(ch=>{
+  ch.addEventListener("click", ()=>{
+    initAudio();
+    if(ch.dataset.answer === "correct"){
+      ch.classList.add("correct");
+      document.querySelectorAll(".rchoice").forEach(c=>c.style.pointerEvents="none");
+      document.getElementById("reasoningResult").classList.add("show");
+      vibrate([50,50,50]);
+      sfxPaper();
+      setTimeout(()=>{
+        document.getElementById("reasoningPanel").classList.remove("show");
+        setTimeout(()=>{
+          dlgBox.classList.add("show");
+          sfxPaper();
+          vibrate(10);
+          wrapIdx = 0;
+          showWrapLine(0);
+        }, 600);
+      }, 1800);
+    } else {
+      ch.classList.add("wrong");
+      vibrate(200);
+      setTimeout(()=>ch.classList.remove("wrong"), 800);
+      showToast("再想想……三條線索的交點在哪？");
+    }
+  });
+});
+
+// ===== 收尾對話（推理正確後） =====
+const wrapDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"三條線索——保護範圍、向下傾瀉、中心位置——全部指向主祭壇的祭台桌。" },
+  { speaker:"elena", name:"艾蓮娜", text:"所以鄭一藏東西的地方，不在側堂，而在主祭壇……走吧。" }
+];
+let wrapIdx = 0;
+let inWrap = false;
+
+// ===== 主祭壇對話 =====
+const altarDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"到了……這就是鄭一說的『她護住的地方』。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……祭台正面刻著三個圓牌——中間那個，好像是主教冠。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……歷任澳門總督上任時，都要把權杖放在聖母像旁祈求庇護。" },
+  { speaker:"elena", name:"艾蓮娜", text:"那麼，如果我們按下這個象徵權力的王冠的話……" }
+];
+let altarIdx = 0;
+let inAltar = false;
+
+function showAltarLine(index){
+  if(index >= altarDialogues.length){
+    inAltar = false;
+    dlgBox.classList.remove("show");
+    // 彈出「按下主教冠圓牌」按鈕
+    setTimeout(()=>{
+      const btn = document.getElementById("pressBtn");
+      btn.classList.add("show");
+    }, 500);
+    return;
+  }
+  const line = altarDialogues[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+  sc_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(sc_typeTimer);
+  sc_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(sc_typeTimer);
+      sc_isTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function showWrapLine(index){
+  if(index >= wrapDialogues.length){
+    inWrap = false;
+    dlgBox.classList.remove("show");
+    setTimeout(()=>{
+      sfxFootsteps();
+      const ov = document.getElementById("transOverlay");
+      ov.classList.remove("fade-out");
+      ov.style.opacity = "1";
+      setTimeout(()=>{
+        document.getElementById("bgLayer").style.backgroundImage = "url('cathedral_altar.jpg')";
+        document.querySelector(".title-text").textContent = "謎題四 · 祭台桌之謎";
+        setTimeout(()=>{
+          ov.style.opacity = "";
+          ov.classList.add("fade-out");
+          setTimeout(()=>{
+            dlgBox.classList.add("show");
+            sfxPaper();
+            vibrate(10);
+            altarIdx = 0;
+            inAltar = true;
+            showAltarLine(0);
+          }, 1200);
+        }, 500);
+      }, 1200);
+    }, 500);
+    return;
+  }
+  inWrap = true;
+  const line = wrapDialogues[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+  sc_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(sc_typeTimer);
+  sc_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(sc_typeTimer);
+      sc_isTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+// ============================================================
+// Toast
+// ============================================================
+let sc_toastTimer = null;
+function showToast(msg, duration){
+  duration = duration || 2000;
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(sc_toastTimer);
+  sc_toastTimer = setTimeout(()=>{ toast.classList.remove("show"); }, duration);
+}
+
+// ============================================================
+// 場景啟動：轉場淡入 → 背景 → 標題欄 → 對話
+// ============================================================
+window.addEventListener("load", ()=>{
+  const transOverlay = document.getElementById("transOverlay");
+  const bgLayer = document.getElementById("bgLayer");
+  const topBar = document.getElementById("topBar");
+
+  // 步驟1：背景顯示
+  bgLayer.classList.add("show");
+
+  // 步驟2：轉場遮罩淡出（0.8s）
+  setTimeout(()=>{
+    transOverlay.classList.add("fade-out");
+  }, 300);
+
+  // 步驟3：標題欄淡入
+  setTimeout(()=>{
+    topBar.classList.add("show");
+  }, 600);
+
+  // 步驟4：對話框彈出 + 第一句台詞
+  setTimeout(()=>{
+    dlgBox.classList.add("show");
+    sfxPaper();
+    vibrate(10);
+    sc_showDialogue(0);
+  }, 1400);
+});
+</script>
+<!-- 密碼筒彈窗 -->
+<div class="box-modal" id="boxModal">
+  <div class="box-modal-mask"></div>
+  <div class="box-modal-panel">
+    <div class="box-title">鄭一的遺物</div>
+    <img class="box-img" src="cryptex.jpg" alt="鄭一的密碼筒">
+    <button class="view-note-btn" onclick="openNote()">查看紙條</button>
+  </div>
+</div>
+
+<!-- 紙條詳情 -->
+<div class="paper-detail" id="paperDetail">
+  <div class="paper-detail-mask"></div>
+  <div class="paper-detail-panel">
+    <div class="note-title">破阵子</div>
+    <div class="note-poem">
+      二十載飄蓬海上，<br>
+      千帆過盡不封侯。<br>
+      黑霧迷航尋聖母，<br>
+      金甌一諾付滄洲。<br>
+      來時風雨滿樓閣，<br>
+      歸日煙波兩岸秋。<br>
+      若問藏鋒何處所，<br>
+      月照蓮洋水自流。
+    </div>
+    <div class="note-back">
+      —— 紙條背面 ——<br>
+      從神聖福音書開始，<br>
+      以四數之序取詩中三字，<br>
+      再以五為階梯，登天使之塔。<br>
+      信鴿會帶你去往最後的答案。
+    </div>
+    <div class="note-hint" onclick="closeNote()" style="cursor:pointer;color:#8b5a2b;font-size:14px;margin-top:20px;">▼ 點擊繼續</div>
+  </div>
+</div>
+
+<!-- 密碼鎖 -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-panel">
+    <div class="lock-title">密碼筒</div>
+    <div class="lock-subtitle">轉動三個圓環，解開密碼</div>
+    <div class="lock-wheels">
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(0,1)">▲</div>
+        <div class="wheel-letter" id="letter0">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(0,-1)">▼</div>
+      </div>
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(1,1)">▲</div>
+        <div class="wheel-letter" id="letter1">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(1,-1)">▼</div>
+      </div>
+      <div class="wheel">
+        <div class="wheel-arrow up" onclick="changeLetter(2,1)">▲</div>
+        <div class="wheel-letter" id="letter2">A</div>
+        <div class="wheel-arrow down" onclick="changeLetter(2,-1)">▼</div>
+      </div>
+    </div>
+    <button class="lock-submit" onclick="checkLock()">確認</button>
+    <div style="margin-top:16px;">
+      <span style="color:#8a7a60;font-size:12px;cursor:pointer;text-decoration:underline;" onclick="showHint()">提示</span>
+    </div>
+  </div>
+</div>
+
+<!-- 密碼筒開啟 -->
+<div class="opened-overlay" id="openedOverlay">
+  <div class="opened-panel">
+    <div class="opened-note">
+      <div class="opened-note-text">China</div>
+    </div>
+    <div class="opened-hint">鄭一留下的最終線索</div>
+  </div>
+</div>
+
+<!-- 通關結算對話 -->
+<div class="finale-overlay" id="finaleOverlay">
+  <div class="finale-panel">
+    <div class="finale-speaker" id="finaleSpeaker">鄭一的後人</div>
+    <div class="finale-text" id="finaleText"></div>
+    <div class="finale-hint" id="finaleHint" style="display:none">▼ 點擊繼續</div>
+  </div>
+</div>
+
+<!-- 寶物庫 -->
+<div class="vault-overlay" id="vaultOverlay">
+  <div class="vault-panel">
+    <div class="vault-title">寶物庫</div>
+    <div class="vault-subtitle">恭喜通關！GlobalFun Go 精選 · 憑此畫面八折</div>
+    <div class="vault-carousel" id="vaultCarousel">
+      <div class="vault-track" id="vaultTrack">
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide1.png" alt="精選一"></div>
+          <div class="vault-slide-text">昆曲水袖杯 · ¥188</div>
+        </div>
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide2.png" alt="精選二"></div>
+          <div class="vault-slide-text">若即·折纸款香薰杯 · ¥298</div>
+        </div>
+        <div class="vault-slide">
+          <div class="vault-slide-img"><img src="products/slide3.png" alt="精選三"></div>
+          <div class="vault-slide-text">束·炫白款 · ¥398</div>
+        </div>
+      </div>
+      <div class="vault-dots" id="vaultDots"></div>
+      <div class="vault-nav">
+        <button class="vault-nav-btn" id="vaultPrev" onclick="vaultSlide(-1)">&#10094;</button>
+        <button class="vault-nav-btn" id="vaultNext" onclick="vaultSlide(1)">&#10095;</button>
+      </div>
+    </div>
+    <div class="vault-note">截圖此畫面發給UP主，即可享八折優惠（GlobalFun Go · 景德鎮手工陶瓷）</div>
+    <div style="text-align:center;margin-top:16px;">
+      <span style="color:#8b6914;font-size:13px;cursor:pointer;text-decoration:underline;" onclick="showEnding()">通關結算 →</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// === 寶物庫輪播 ===
+var vaultSlideIdx = 0;
+function vaultSlide(dir){
+  vaultSlideIdx += dir;
+  var track = document.getElementById('vaultTrack');
+  var total = track.children.length;
+  if(vaultSlideIdx < 0) vaultSlideIdx = total - 1;
+  if(vaultSlideIdx >= total) vaultSlideIdx = 0;
+  track.style.transform = 'translateX(-' + (vaultSlideIdx * 100) + '%)';
+  updateVaultDots();
+}
+function updateVaultDots(){
+  var dots = document.getElementById('vaultDots');
+  var slides = document.getElementById('vaultTrack').children;
+  if(!dots) return;
+  dots.innerHTML = '';
+  for(var i=0;i<slides.length;i++){
+    var d = document.createElement('div');
+    d.className = 'vault-dot' + (i===vaultSlideIdx ? ' active' : '');
+    (function(idx){ d.onclick = function(){ vaultSlideIdx = idx; document.getElementById('vaultTrack').style.transform='translateX(-'+(idx*100)+'%)'; updateVaultDots(); }; })(i);
+    dots.appendChild(d);
+  }
+}
+(function(){
+  var startX=0, endX=0;
+  var carousel = document.getElementById('vaultCarousel');
+  if(!carousel) return;
+  carousel.addEventListener('touchstart', function(e){ startX = e.touches[0].clientX; }, {passive:true});
+  carousel.addEventListener('touchend', function(e){
+    endX = e.changedTouches[0].clientX;
+    var diff = startX - endX;
+    if(Math.abs(diff) > 40){ vaultSlide(diff > 0 ? 1 : -1); }
+  }, {passive:true});
+})();
+// Init dots when page loads
+window.addEventListener('load', function(){ setTimeout(updateVaultDots, 100); });
+</script>
+
+<!-- 通關結算尾頁 -->
+<div class="ending-overlay" id="endingOverlay">
+  <div class="ending-panel">
+    <div class="ending-title">恭喜通關</div>
+    <div class="ending-divider">✦</div>
+    <div class="ending-text">
+      你解開了鄭一留下的最後謎題。<br>
+      這趟澳門尋寶之旅，到此圓滿結束～<br>
+      謝謝你的參與，希望你玩得愉快～
+    </div>
+    <div class="ending-product-section" style="margin-top:28px;">
+      <div class="ending-product-title">其他項目</div>
+      <div class="ending-product-card">
+        <div class="ending-product-name">澳門媽閣廟迷蹤</div>
+        <div class="ending-product-desc">澳門媽閣廟解密體驗</div>
+        <div class="ending-product-tag">憑通關憑證，後台八折領取</div>
+      </div>
+    </div>
+    <div class="ending-follow" style="margin-top:24px;">歡迎關注，後續產品持續更新中</div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(139,105,20,.2);">
+      <div style="color:#5a4a30;font-size:11px;line-height:1.8;">
+        本遊戲最終解釋權歸粵港澳大灣區博士協會<br>
+        GlobalFun Go 項目組所有
+      </div>
+      <div style="color:#8a7a60;font-size:12px;margin-top:8px;">
+        歡迎感興趣的朋友來聯繫我們
+      </div>
+      <div style="color:#d4a857;font-size:14px;margin-top:4px;font-weight:700;">
+        WeChat：ysyang2005
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="press-btn-overlay" id="pressBtn" onclick="pressMitre()">
+  <div class="press-btn">按下主教冠圓牌</div>
+</div>
+
+<script>
+// ============================================================
+// 按壓主教冠 → 密碼筒
+// ============================================================
+function pressMitre(){
+  initAudio();
+  const btn = document.getElementById("pressBtn");
+  btn.classList.remove("show");
+  vibrate([30,80,30,80,30]);
+  sfxWoodTick();
+  setTimeout(()=>{
+    document.getElementById("boxModal").classList.add("show");
+  }, 800);
+}
+
+function openNote(){
+  initAudio();
+  sfxPaper();
+  vibrate(10);
+  document.getElementById("paperDetail").classList.add("show");
+}
+
+function closeNote(){
+  altarDialogueActive = false;
+  setTimeout(()=>{
+    postNoteDialoguesIdx = 0;
+    dlgBox.classList.add("show");
+    showPostNoteLine(0);
+  }, 300);
+}
+
+// ============================================================
+// 紙條後對話系統
+// ============================================================
+const postNoteDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"從神聖的福音書開始……之前解出的密碼是2416，就是從聖經章節來的。" },
+  { speaker:"zhujiao", name:"主角", text:"2、4、1、6……兩兩一組？第二行第四字、第一行第六字……不对，才兩個字。" },
+  { speaker:"elena", name:"艾蓮娜", text:"密碼筒是三個圓環。也許2416裡只用了三個座標——第二行第四字、第四行第一字、第一行第六字。" },
+  { speaker:"zhujiao", name:"主角", text:"第二行第四字是盡，第四行第一字是金，第一行第六字是海——三個起點。" },
+  { speaker:"elena", name:"艾蓮娜", text:"以五為階梯，登天使之塔……從每個起點往後數五個字。" },
+  { speaker:"zhujiao", name:"主角", text:"盡往後五字是霧，金往後五字是滄，海往後五字是盡。霧、滄、盡——拼音首字母W、C、J。" },
+  { speaker:"elena", name:"艾蓮娜", text:"信鴿會帶你去往最後的答案……之前側堂數到的七個小天使，就是七步——把W、C、J各往後移七位。" }
+];
+let postNoteDialoguesIdx = 0;
+let postNoteTyping = false;
+let postNoteTimer = null;
+
+function showPostNoteLine(index){
+  if(index >= postNoteDialogues.length){
+    dlgBox.classList.remove("show");
+    dlgHint.style.display = "none";
+    setTimeout(()=>{
+      document.getElementById("lockOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = postNoteDialogues[index];
+  dlgDot.className = "speaker-dot " + line.speaker;
+  dlgName.className = "speaker-name " + line.speaker;
+  dlgName.textContent = line.name;
+  dlgText.innerHTML = "";
+  dlgHint.style.display = "none";
+  postNoteTyping = true;
+  let i = 0;
+  const text = line.text;
+  postNoteTimer = setInterval(()=>{
+    if(i < text.length){
+      dlgText.innerHTML = text.substring(0, i+1) + '<span class="dialog-cursor"></span>';
+      i++;
+      if(i % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(postNoteTimer);
+      postNoteTyping = false;
+      dlgText.innerHTML = text;
+      dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function completePostNoteTyping(){
+  clearInterval(postNoteTimer);
+  dlgText.innerHTML = postNoteDialogues[postNoteDialoguesIdx].text;
+  postNoteTyping = false;
+  dlgHint.style.display = "block";
+}
+
+// ============================================================
+// 密碼鎖
+// ============================================================
+function showHint(){
+  initAudio();
+  showToast("把W、C、J各往後挪七位");
+}
+
+let currentLetters = [0,0,0];
+const ANSWER = [3,9,16]; // D,J,Q
+
+function changeLetter(wheel, dir){
+  initAudio();
+  sfxWoodTick();
+  currentLetters[wheel] = (currentLetters[wheel] + dir + 26) % 26;
+  document.getElementById("letter"+wheel).textContent = String.fromCharCode(65 + currentLetters[wheel]);
+}
+
+function checkLock(){
+  let correct = true;
+  for(let i=0;i<3;i++){
+    if(currentLetters[i] !== ANSWER[i]){ correct = false; break; }
+  }
+  if(correct){
+    sfxWoodTick();
+    vibrate([50,100,50,100,50]);
+    document.getElementById("lockOverlay").classList.remove("show");
+    setTimeout(()=>{
+      document.getElementById("openedOverlay").classList.add("show");
+      document.getElementById("openedOverlay").style.cursor = "pointer";
+      document.getElementById("openedOverlay").onclick = startFinale;
+    }, 600);
+  } else {
+    sfxWoodTick();
+    vibrate([200,50,200]);
+    const panel = document.querySelector(".lock-panel");
+    panel.style.animation = "none";
+    setTimeout(()=>{ panel.style.animation = "shake .4s"; }, 10);
+  }
+}
+
+// ============================================================
+// 通關結算對話
+// ============================================================
+const finaleLines = [
+  { speaker:"鄭一的後人", text:"……你終於找到了。我是鄭一的後人，世代守著這個秘密。" },
+  { speaker:"鄭一的後人", text:"這位老先生當年縱橫南海，卻把一筆最大的財寶藏在了這座教堂裡。" },
+  { speaker:"鄭一的後人", text:"他留下的不僅是金銀——而是China（瓷器），這些瓷器都是景德鎮手工打造的產物。" },
+  { speaker:"鄭一的後人", text:"恭喜你，通關了。這是寶物庫，裡頭是我們世代收藏的精品，憑此畫面給你八折。" }
+];
+let finaleIdx = 0;
+let finaleTyping = false;
+
+function startFinale(){
+  initAudio();
+  document.getElementById("openedOverlay").classList.remove("show");
+  finaleIdx = 0;
+  document.getElementById("finaleOverlay").classList.add("show");
+  showFinaleLine(0);
+}
+
+function showFinaleLine(index){
+  if(index >= finaleLines.length){
+    document.getElementById("finaleOverlay").classList.remove("show");
+    const op = document.getElementById("openedOverlay");
+    op.classList.remove("show");
+    op.style.display = "none";
+    const pd = document.getElementById("paperDetail");
+    if(pd){ pd.classList.remove("show"); pd.style.display = "none"; }
+    const bm = document.getElementById("boxModal");
+    if(bm){ bm.classList.remove("show"); bm.style.display = "none"; }
+    setTimeout(()=>{
+      document.getElementById("vaultOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = finaleLines[index];
+  document.getElementById("finaleSpeaker").textContent = line.speaker;
+  document.getElementById("finaleText").innerHTML = "";
+  document.getElementById("finaleHint").style.display = "none";
+  finaleTyping = true;
+  let i = 0;
+  const text = line.text;
+  const timer = setInterval(()=>{
+    if(i < text.length){
+      document.getElementById("finaleText").innerHTML = text.substring(0, i+1);
+      i++;
+    } else {
+      clearInterval(timer);
+      finaleTyping = false;
+      document.getElementById("finaleText").innerHTML = text;
+      document.getElementById("finaleHint").style.display = "block";
+    }
+  }, 35);
+  window._finaleTimer = timer;
+}
+
+document.getElementById("finaleOverlay").addEventListener("click", ()=>{
+  initAudio();
+  if(finaleTyping){
+    clearInterval(window._finaleTimer);
+    document.getElementById("finaleText").innerHTML = finaleLines[finaleIdx].text;
+    finaleTyping = false;
+    document.getElementById("finaleHint").style.display = "block";
+    return;
+  }
+  finaleIdx++;
+  showFinaleLine(finaleIdx);
+});
+
+function showEnding(){
+  initAudio();
+  document.getElementById("vaultOverlay").classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("endingOverlay").classList.add("show");
+  }, 400);
+}
+</script>
+
+</div>
+
+<style>
+/* 側堂謎題 CSS */
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#000;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+#game{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+  overflow:hidden;
+}
+
+/* 背景圖 */
+.bg-layer{
+  position:absolute;inset:0;z-index:1;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  opacity:0;transition:opacity 1s ease;
+}
+.bg-layer.show{opacity:1}
+.bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 25%,transparent 55%,rgba(0,0,0,.55) 100%);
+}
+
+/* 暗角 */
+.vignette{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  box-shadow:inset 0 0 120px rgba(0,0,0,.5);
+}
+
+/* 頂部標題欄 */
+.top-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding-top:env(safe-area-inset-top,0px);
+  background:linear-gradient(180deg,rgba(74,44,23,.95) 0%,rgba(92,58,30,.85) 100%);
+  border-bottom:2px solid #c9a96e;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:12px;padding-right:12px;
+  height:calc(48px + env(safe-area-inset-top,0px));
+  opacity:0;transition:opacity .6s ease;
+}
+.top-bar.show{opacity:1}
+.top-bar .back-btn{
+  background:none;border:none;color:#c9a96e;font-size:14px;cursor:pointer;
+  padding:6px 10px;letter-spacing:1px;
+}
+.top-bar .title-text{
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:4px;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.top-bar .spacer{width:48px;}
+
+/* 對話框 */
+.dialog-box{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  left:14px;right:14px;z-index:20;
+  background:rgba(245,240,232,.96);
+  border:2px solid #8b5a2b;
+  border-radius:8px;
+  padding:14px 16px 18px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3);
+  opacity:0;transform:translateY(20px);
+  transition:opacity .5s ease, transform .5s ease;
+  pointer-events:none;
+}
+.dialog-box.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.speaker-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.speaker-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.speaker-dot.elena{background:#7a4a6a}
+.speaker-dot.zhujiao{background:#2a5a6b}
+.speaker-name{
+  font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.speaker-name.elena{color:#7a4a6a}
+.speaker-name.zhujiao{color:#2a5a6b}
+.dialog-text{
+  color:#2a1810;font-size:15px;line-height:1.7;
+  min-height:52px;
+}
+.dialog-cursor{
+  display:inline-block;width:2px;height:16px;background:#5c3a1e;
+  animation:cursorBlink .7s step-end infinite;vertical-align:middle;margin-left:2px;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.dialog-hint{
+  position:absolute;bottom:6px;right:14px;
+  color:#8b7a5a;font-size:12px;letter-spacing:1px;
+  animation:hintBlink 1.2s ease-in-out infinite;
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* 轉場遮罩 */
+.transition-overlay{
+  position:absolute;inset:0;z-index:50;background:#000;
+  opacity:0;transition:opacity .8s ease;pointer-events:none;
+}
+.transition-overlay.darken{opacity:1}
+.transition-overlay.fade-out{opacity:0}
+
+/* Toast */
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+
+/* 選擇菜單（象徵七徵） */
+.choice-menu{
+  position:absolute;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  left:14px;right:14px;z-index:15;
+  background:linear-gradient(180deg,rgba(74,44,23,.97) 0%,rgba(58,34,18,.97) 100%);
+  border:2px solid #c9a96e;border-radius:8px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1);
+  padding:0;
+  opacity:0;transform:translateY(30px);
+  transition:opacity .5s ease, transform .5s ease;
+  max-height:60vh;overflow-y:auto;
+}
+.choice-menu.show{opacity:1;transform:translateY(0)}
+.choice-title{
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border-bottom:1px solid #c9a96e;
+  padding:10px 16px;
+  color:#f0e6d2;font-size:14px;font-weight:700;
+  letter-spacing:4px;text-align:center;
+  position:sticky;top:0;z-index:1;
+}
+.choice-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  border-bottom:1px solid rgba(201,169,110,.2);
+  color:#d4c4a0;font-size:14px;
+  cursor:pointer;letter-spacing:1px;
+  transition:background .15s ease;
+}
+.choice-item:last-child{border-bottom:none}
+.choice-item:active{background:rgba(201,169,110,.15)}
+.choice-item .num{
+  color:#c9a96e;font-weight:700;min-width:20px;
+}
+.choice-item .check{
+  margin-left:auto;color:#6b8b3a;font-size:16px;
+  opacity:0;transition:opacity .3s ease;
+}
+.choice-item.observed .check{opacity:1}
+.choice-item.observed{color:#8a7a60;opacity:.6}
+
+/* 線索推理板 */
+.reasoning-panel{
+  position:absolute;inset:0;z-index:30;
+  background:rgba(20,12,6,.96);
+  display:flex;flex-direction:column;align-items:center;
+  padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px) 16px;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s ease;
+  overflow-y:auto;
+}
+.reasoning-panel.show{opacity:1;pointer-events:auto}
+.reasoning-title{
+  color:#c9a96e;font-size:16px;font-weight:700;
+  letter-spacing:6px;margin:24px 0 8px;text-align:center;
+}
+.reasoning-sub{
+  color:#8a7a60;font-size:12px;letter-spacing:2px;margin-bottom:20px;text-align:center;
+}
+.reasoning-cards{
+  display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;
+}
+.rcard{
+  background:linear-gradient(180deg,rgba(74,44,23,.9),rgba(58,34,18,.9));
+  border:1.5px solid #c9a96e;border-radius:8px;
+  padding:14px 16px;cursor:pointer;
+  transition:all .3s ease;
+}
+.rcard:active{transform:scale(.97)}
+.rcard.opened{border-color:#e8c97a;box-shadow:0 0 16px rgba(201,169,110,.3)}
+.rcard-head{
+  display:flex;align-items:center;gap:8px;
+  color:#d4c4a0;font-size:14px;font-weight:700;letter-spacing:1px;
+}
+.rcard-head .ricon{color:#c9a96e;font-size:16px}
+.rcard-desc{
+  color:#a89878;font-size:12px;line-height:1.6;margin-top:6px;
+  max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .4s ease;
+  opacity:0;
+}
+.rcard.opened .rcard-desc{max-height:100px;opacity:1}
+.reasoning-arrow{
+  color:#c9a96e;font-size:20px;text-align:center;margin:4px 0;
+}
+.reasoning-question{
+  width:100%;max-width:340px;
+  background:linear-gradient(180deg,#6b4226,#4a2c17);
+  border:2px solid #c9a96e;border-radius:8px;
+  padding:16px;text-align:center;margin-top:16px;
+  color:#f0e6d2;font-size:15px;font-weight:700;letter-spacing:2px;
+}
+.reasoning-choices{
+  display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:14px;
+}
+.rchoice{
+  background:rgba(74,44,23,.85);
+  border:1.5px solid rgba(201,169,110,.4);
+  border-radius:6px;padding:12px 16px;
+  color:#d4c4a0;font-size:14px;cursor:pointer;
+  letter-spacing:1px;text-align:center;
+  transition:all .2s ease;
+}
+.rchoice:active{background:rgba(201,169,110,.2)}
+.rchoice.correct{
+  border-color:#6b8b3a;background:rgba(107,139,58,.25);
+  color:#a8d07a;
+}
+.rchoice.wrong{
+  border-color:#8b3a3a;background:rgba(139,58,58,.25);
+  color:#d07a7a;
+}
+.reasoning-result{
+  color:#a8d07a;font-size:14px;text-align:center;margin-top:14px;
+  letter-spacing:1px;display:none;
+}
+.reasoning-result.show{display:block;animation:hintBlink 1.2s ease-in-out infinite}
+.press-btn-overlay{position:absolute;top:55%;left:0;right:0;display:flex;justify-content:center;z-index:25;opacity:0;transition:opacity .4s ease;pointer-events:none;transform:translateY(-50%)}
+.press-btn-overlay.show{opacity:1;pointer-events:auto}
+.press-btn{background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;padding:14px 36px;border-radius:30px;font-size:16px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,.4);border:1px solid rgba(255,220,150,.4);animation:pressPulse 2s ease-in-out infinite}
+@keyframes pressPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.box-modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center}
+.box-modal.show{display:flex}
+.box-modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.7);opacity:0;transition:opacity .4s}
+.box-modal.show .box-modal-mask{opacity:1}
+.box-modal-panel{position:relative;width:88%;max-width:420px;background:linear-gradient(145deg,#3d2b1f,#2a1d14);border:1px solid rgba(180,140,80,.4);border-radius:14px;padding:24px 20px;z-index:1;transform:scale(.8);opacity:0;transition:all .4s cubic-bezier(.2,1.4,.5,1)}
+.box-modal.show .box-modal-panel{transform:scale(1);opacity:1}
+.box-title{text-align:center;color:#d4a857;font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:2px}
+.box-art{display:flex;flex-direction:column;align-items:center;gap:14px}
+.wooden-box{width:120px;height:80px;position:relative}
+.wooden-box .box-lid{position:absolute;top:0;left:0;right:0;height:28px;background:linear-gradient(180deg,#5a3e28,#3d2b1f);border:1px solid #2a1d14;border-radius:6px 6px 0 0}
+.wooden-box .box-body{position:absolute;bottom:0;left:8px;right:8px;height:52px;background:linear-gradient(180deg,#4a3524,#2e2015);border:1px solid #2a1d14;border-radius:0 0 6px 6px;display:flex;align-items:center;justify-content:center}
+.wooden-box .box-body::after{content:"🔒";font-size:20px}
+.paper-note{width:100%;background:#f5e6c8;border-radius:6px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.3);font-family:serimeter;position:relative}
+.paper-note::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:rgba(139,90,43,.2)}
+.note-title{text-align:center;color:#5a3e28;font-size:16px;font-weight:700;margin-bottom:10px;letter-spacing:4px}
+.note-poem{color:#3d2b1f;font-size:14px;line-height:1.9;text-align:center;letter-spacing:2px}
+.box-hint{text-align:center;color:#8a7a60;font-size:12px;margin-top:14px;font-style:italic}
+.box-close-btn{display:block;margin:14px auto 0;background:linear-gradient(135deg,#8b6914,#b8860b);color:#fff8e0;border:none;padding:10px 28px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer}
+.box-modal-mask{
+  position:absolute;inset:0;background:rgba(0,0,0,.75);
+  opacity:0;transition:opacity .4s;
+}
+.box-modal-panel{
+  position:relative;display:flex;flex-direction:column;align-items:center;z-index:1;
+  transform:scale(.8);opacity:0;
+  transition:all .4s cubic-bezier(.2,1.4,.5,1);
+}
+.box-title{
+  color:#d4a857;font-size:16px;font-weight:700;
+  margin-bottom:16px;letter-spacing:4px;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);
+}
+.box-img{
+  width:220px;height:220px;object-fit:cover;border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6), 0 0 0 2px rgba(180,140,80,.3);
+}
+.view-note-btn{
+  margin-top:14px;
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:none;padding:12px 32px;
+  border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 15px rgba(0,0,0,.4);
+  border:1px solid rgba(255,220,150,.4);
+}
+.paper-detail{
+  position:absolute;inset:0;z-index:35;
+  display:none;align-items:center;justify-content:center;
+}
+.note-title{
+  text-align:center;color:#5a3e28;font-size:18px;font-weight:700;
+  margin-bottom:14px;letter-spacing:6px;
+}
+.note-poem{
+  color:#3d2b1f;font-size:15px;line-height:2.0;
+  text-align:center;letter-spacing:3px;
+}
+.note-back{
+  margin-top:18px;padding-top:14px;
+  border-top:1px dashed rgba(139,90,43,.4);
+  text-align:center;color:#8b6914;font-size:13px;
+  line-height:1.8;font-style:italic;letter-spacing:1px;
+}
+.note-hint{
+  text-align:center;color:#8b7355;font-size:12px;
+  margin-top:16px;font-style:italic;
+}
+.lock-overlay{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;
+}
+.lock-panel{
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:16px;
+  padding:30px 24px;width:88%;max-width:340px;
+  text-align:center;box-shadow:0 0 40px rgba(139,105,20,.3);
+}
+.lock-title{
+  color:#d4a857;font-size:20px;font-weight:700;
+  letter-spacing:6px;margin-bottom:6px;
+}
+.lock-subtitle{
+  color:#8a7a60;font-size:12px;margin-bottom:24px;
+}
+.lock-wheels{
+  display:flex;justify-content:center;gap:18px;margin-bottom:28px;
+}
+.wheel{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.wheel-arrow{
+  color:#8b6914;font-size:16px;cursor:pointer;
+  padding:4px 12px;user-select:none;
+}
+.wheel-letter{
+  width:56px;height:56px;
+  background:linear-gradient(145deg,#b8860b,#8b6914);
+  border:2px solid #d4a857;border-radius:8px;
+  color:#fff;font-size:28px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.2),0 2px 8px rgba(0,0,0,.4);
+}
+.lock-submit{
+  background:linear-gradient(135deg,#8b6914,#b8860b);
+  color:#fff8e0;border:1px solid rgba(255,220,150,.4);
+  padding:10px 40px;border-radius:20px;
+  font-size:15px;font-weight:700;letter-spacing:4px;
+  cursor:pointer;
+}
+.opened-overlay{
+  position:absolute;inset:0;z-index:60;
+  background:radial-gradient(circle,rgba(139,105,20,.3),rgba(0,0,0,.9));
+  display:none;align-items:center;justify-content:center;
+}
+.opened-panel{text-align:center;animation:fadeInUp .8s ease}
+.opened-note{
+  background:linear-gradient(145deg,#f5e6c8,#e8d5a8);
+  border:2px solid #8b6914;border-radius:4px;
+  padding:40px 50px;box-shadow:0 0 60px rgba(212,168,87,.5);
+  transform:rotate(-2deg);
+}
+.opened-note-text{
+  color:#3d2b1f;font-size:32px;font-weight:900;
+  letter-spacing:8px;
+}
+.opened-hint{
+  margin-top:20px;color:#d4a857;font-size:14px;
+  letter-spacing:3px;
+}
+.finale-overlay{
+  position:absolute;inset:0;z-index:70;
+  background:rgba(0,0,0,.9);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.finale-panel{
+  width:100%;padding:20px 20px 40px;
+}
+.finale-speaker{
+  color:#d4a857;font-size:15px;font-weight:700;margin-bottom:10px;
+}
+.finale-text{
+  color:#e8dcc8;font-size:16px;line-height:1.8;min-height:60px;
+}
+.finale-hint{
+  text-align:right;color:#8a7a60;font-size:14px;
+  animation:hintBlink 1.2s ease-in-out infinite;margin-top:10px;
+}
+.vault-overlay{
+  position:absolute;inset:0;z-index:80;
+  background:radial-gradient(circle,rgba(40,30,10,.95),rgba(0,0,0,1));
+  display:none;align-items:center;justify-content:center;
+}
+.vault-panel{
+  width:92%;max-width:400px;max-height:90%;
+  overflow-y:auto;
+  background:linear-gradient(145deg,#2a1f14,#1a1208);
+  border:2px solid #8b6914;border-radius:16px;
+  padding:24px 16px;
+}
+.vault-title{
+  text-align:center;color:#d4a857;font-size:22px;
+  font-weight:900;letter-spacing:8px;margin-bottom:4px;
+}
+.vault-subtitle{
+  text-align:center;color:#b8860b;font-size:12px;
+  margin-bottom:20px;letter-spacing:1px;
+}
+.vault-carousel{
+  position:relative;width:100%;margin-bottom:20px;
+  overflow:hidden;border-radius:12px;
+  border:1px solid rgba(139,105,20,.4);
+}
+.vault-track{
+  display:flex;transition:transform .4s ease;
+  width:100%;
+}
+.vault-slide{
+  width:100%;min-width:100%;flex-shrink:0;text-align:center;
+  padding:16px;box-sizing:border-box;
+}
+.vault-slide-img{
+  width:100%;aspect-ratio:1;border-radius:8px;
+  overflow:hidden;margin-bottom:12px;
+  background:rgba(139,105,20,.08);
+}
+.vault-slide-img img{
+  width:100%;height:100%;object-fit:contain;display:block;background:#f5efe5;
+}
+.vault-slide-text{
+  color:#e8dcc8;font-size:14px;line-height:1.6;
+  min-height:40px;
+}
+.vault-dots{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:5;
+}
+.vault-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(139,105,20,.3);cursor:pointer;
+  transition:all .3s;
+}
+.vault-dot.active{
+  background:#d4a857;transform:scale(1.3);
+}
+.vault-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:100%;display:flex;justify-content:space-between;
+  padding:0 4px;box-sizing:border-box;z-index:5;
+  pointer-events:none;
+}
+.vault-nav-btn{
+  pointer-events:auto;
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(0,0,0,.5);color:#d4a857;
+  border:1px solid rgba(139,105,20,.4);
+  font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.vault-nav-btn:active{background:rgba(139,105,20,.4);}
+.vault-note{
+  text-align:center;color:#b8860b;font-size:13px;
+  padding:12px;background:rgba(139,105,20,.1);
+  border-radius:8px;border:1px dashed rgba(139,105,20,.3);
+}
+.ending-overlay{
+  position:absolute;inset:0;z-index:90;
+  background:#000;
+  display:none;align-items:center;justify-content:center;
+}
+.ending-panel{
+  width:88%;max-width:360px;text-align:center;
+  animation:fadeInUp 1s ease;
+}
+.ending-title{
+  color:#d4a857;font-size:28px;font-weight:900;
+  letter-spacing:10px;margin-bottom:8px;
+}
+.ending-divider{
+  color:#8b6914;font-size:18px;margin-bottom:20px;
+}
+.ending-text{
+  color:#e8dcc8;font-size:15px;line-height:2;margin-bottom:16px;
+}
+.ending-thanks{
+  color:#b8860b;font-size:14px;letter-spacing:4px;margin-bottom:30px;
+}
+.ending-product-section{
+  margin-bottom:24px;
+}
+.ending-product-title{
+  color:#8b7a60;font-size:13px;margin-bottom:12px;letter-spacing:2px;
+}
+.ending-product-card{
+  background:rgba(139,105,20,.08);
+  border:1px solid rgba(139,105,20,.3);
+  border-radius:10px;padding:16px;
+}
+.ending-product-name{
+  color:#d4a857;font-size:17px;font-weight:700;margin-bottom:4px;
+}
+.ending-product-desc{
+  color:#8a7a60;font-size:12px;margin-bottom:8px;
+}
+.ending-product-tag{
+  color:#b8860b;font-size:12px;
+  background:rgba(139,105,20,.15);
+  padding:4px 12px;border-radius:12px;display:inline-block;
+}
+.ending-follow{
+  color:#6a5a40;font-size:12px;letter-spacing:1px;
+}
+.toast{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(28,20,12,.92);color:#d4c4a0;
+  padding:12px 24px;border-radius:6px;font-size:14px;
+  border:1px solid rgba(201,169,110,.4);
+  z-index:100;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;letter-spacing:1px;
+}
+.toast.show{opacity:1}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-8px)}
+  75%{transform:translateX(8px)}
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes hintBlink{0%,100%{opacity:.3}50%{opacity:1}}
+
+
+</style>
+
+<script>
+// 側堂謎題啟動入口
+function startSideChapelPuzzle() {
+  // 顯示側堂背景
+  const bg = document.querySelector('#sideChapelPuzzle .bg-layer');
+  if(bg) bg.classList.add('show');
+  const vt = document.querySelector('#sideChapelPuzzle .vignette');
+  if(vt) vt.classList.add('show');
+  
+  // 啟動側堂開場對話
+  setTimeout(() => {
+    scp_currentLine = 0;
+    scp_isTyping = false;
+    const dlg = document.querySelector('#sideChapelPuzzle .dialog-box');
+    if(dlg) dlg.classList.add('show');
+    scp_showDialogue(0);
+  }, 600);
+}
+
+// 側堂謎題JS
+
+// ============================================================
+// 音頻系統（Web Audio，繞過自動播放限制）
+// ============================================================
+let scp_audioCtx = null;
+function scp_initAudio(){
+  if(scp_audioCtx) return;
+  try{ scp_audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+document.addEventListener('pointerdown', initAudio, {once:true});
+
+function scp_sfxWoodTick(){
+  if(!scp_audioCtx) return;
+  const o = scp_audioCtx.createOscillator();
+  const g = scp_audioCtx.createGain();
+  o.type = 'triangle'; o.frequency.value = 800;
+  g.gain.setValueAtTime(0.08, scp_audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.05);
+  o.connect(g).connect(scp_audioCtx.destination);
+  o.start(); o.stop(scp_audioCtx.currentTime + 0.05);
+}
+function scp_sfxPaper(){
+  if(!scp_audioCtx) return;
+  const bufferSize = scp_audioCtx.sampleRate * 0.15;
+  const buffer = scp_audioCtx.createBuffer(1, bufferSize, scp_audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize) * 0.3; }
+  const src = scp_audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = scp_audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 2000;
+  src.connect(filter).connect(scp_audioCtx.destination);
+  src.start();
+}
+function scp_sfxFootsteps(){
+  if(!scp_audioCtx) return;
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const o = scp_audioCtx.createOscillator();
+      const g = scp_audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 120 + Math.random()*40;
+      g.gain.setValueAtTime(0.12, scp_audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, scp_audioCtx.currentTime + 0.12);
+      o.connect(g).connect(scp_audioCtx.destination);
+      o.start(); o.stop(scp_audioCtx.currentTime + 0.12);
+    }, i*200);
+  }
+}
+function scp_vibrate(pattern){
+  if(navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ============================================================
+// 對話系統
+// ============================================================
+const scp_dialogues = [
+  { speaker:"elena", name:"艾蓮娜", text:"（腳步聲停住）……到了。這就是側堂。", sfx:"footsteps" },
+  { speaker:"zhujiao", name:"主角", text:"黃牆、小天使、六根燭台……和手札上寫的一模一樣。" },
+  { speaker:"elena", name:"艾蓮娜", text:"這尊聖母像……雙手張開，腳下踩著蛇。感覺不單純是供奉。" },
+  { speaker:"zhujiao", name:"主角", text:"鄭一選這裡做接應點，一定有原因。先看看四周。" }
+];
+
+let scp_currentLine = 0;
+let scp_isTyping = false;
+let scp_typeTimer = null;
+
+// 觀察對話狀態
+let scp_isInObserve = false;
+let scp_currentObserveItem = null;
+let scp_currentObserveLine = 0;
+const scp_observeDialogues = {
+  "1": [
+    { speaker:"zhujiao", name:"主角", text:"祭台正面……有個交織的A和M字母。" },
+    { speaker:"elena", name:"艾蓮娜", text:"A和M交織在一起……這是什麼記號？" },
+    { speaker:"zhujiao", name:"主角", text:"這是Auspice Maria——『在聖母保護之下』的意思。" },
+    { speaker:"elena", name:"艾蓮娜", text:"在聖母保護之下……也就是說，重要的不是像，而是她護住的東西？" },
+    { speaker:"zhujiao", name:"主角", text:"沒錯。鄭一用這個符號告誡後人——別盯著像看，看她護住的地方。" }
+  ],
+  "2": [
+    { speaker:"zhujiao", name:"主角", text:"她的雙手是張開的……不是祈禱的姿勢，像是在傾瀉什麼。" },
+    { speaker:"elena", name:"艾蓮娜", text:"傾瀉……你是說，神力不是附在像上，而是從她手中流向下方？" },
+    { speaker:"zhujiao", name:"主角", text:"對，流向下方——也就是祭台的位置。鄭一在暗示，東西在像的下方。" }
+  ],
+  "3": [
+    { speaker:"zhujiao", name:"主角", text:"左右各三根燭台，一共六根……它們把聖母像框在正中間。" },
+    { speaker:"elena", name:"艾蓮娜", text:"六根燭台左右對稱……它們不是在裝飾，而是在指出中心點？" },
+    { speaker:"zhujiao", name:"主角", text:"對，中心點——側堂的中心是這尊像，但整座教堂的中心，是主祭壇。" }
+  ]
+};
+
+const scp_dlgBox = document.getElementById("dlgBox");
+const scp_dlgDot = document.getElementById("dlgDot");
+const scp_dlgName = document.getElementById("dlgName");
+const scp_dlgText = document.getElementById("dlgText");
+const scp_dlgHint = document.getElementById("dlgHint");
+
+function scp_showDialogue(index){
+  if(index >= scp_dialogues.length){
+    scp_finishDialogues();
+    return;
+  }
+  const line = scp_dialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+
+  if(line.sfx === "footsteps") sfxFootsteps();
+
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function scp_completeTyping(){
+  clearInterval(scp_typeTimer);
+  let text;
+  if(scp_inAltar){
+    text = scp_altarDialogues[scp_altarIdx].text;
+  } else if(scp_inWrap){
+    text = scp_wrapDialogues[scp_wrapIdx].text;
+  } else if(scp_isInObserve){
+    text = scp_observeDialogues[scp_currentObserveItem][scp_currentObserveLine].text;
+  } else {
+    text = scp_dialogues[scp_currentLine].text;
+  }
+  scp_dlgText.innerHTML = text;
+  scp_isTyping = false;
+  scp_dlgHint.style.display = "block";
+}
+
+scp_dlgBox.addEventListener("click", ()=>{
+  initAudio();
+  if(scp_isTyping){ scp_completeTyping(); return; }
+  if(scp_inAltar){
+    scp_altarIdx++;
+    showAltarLine(scp_altarIdx);
+    return;
+  }
+  if(scp_inWrap){
+    scp_wrapIdx++;
+    showWrapLine(scp_wrapIdx);
+    return;
+  }
+  if(scp_isInObserve){
+    scp_currentObserveLine++;
+    showObserveLine(scp_currentObserveLine);
+    return;
+  }
+  scp_currentLine++;
+  scp_showDialogue(scp_currentLine);
+});
+
+function scp_finishDialogues(){
+  scp_dlgBox.classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("choiceMenu").classList.add("show");
+    sfxPaper();
+    vibrate(10);
+  }, 400);
+}
+
+// ===== 觀察對話系統 =====
+function startObserve(itemId){
+  if(!scp_observeDialogues[itemId]) return false;
+  scp_isInObserve = true;
+  scp_currentObserveItem = itemId;
+  scp_currentObserveLine = 0;
+  document.getElementById("choiceMenu").classList.remove("show");
+  setTimeout(()=>{
+    scp_dlgBox.classList.add("show");
+    sfxPaper();
+    vibrate(10);
+    showObserveLine(0);
+  }, 350);
+  return true;
+}
+
+function showObserveLine(index){
+  const lines = scp_observeDialogues[scp_currentObserveItem];
+  if(index >= lines.length){
+    finishObserve();
+    return;
+  }
+  const line = lines[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function finishObserve(){
+  scp_isInObserve = false;
+  scp_dlgBox.classList.remove("show");
+  const item = document.querySelector('.choice-item[data-id="' + scp_currentObserveItem + '"]');
+  if(item) item.classList.add("observed");
+  scp_currentObserveItem = null;
+  const remaining = document.querySelectorAll('.choice-item:not(.observed)');
+  setTimeout(()=>{
+    if(remaining.length === 0){
+      document.getElementById("reasoningPanel").classList.add("show");
+      sfxPaper();
+    } else {
+      document.getElementById("choiceMenu").classList.add("show");
+      sfxPaper();
+    }
+  }, 400);
+}
+
+// 選擇菜單點擊
+document.querySelectorAll(".choice-item").forEach(item=>{
+  item.addEventListener("click", ()=>{
+    initAudio();
+    if(item.classList.contains("observed")){
+      showToast("已觀察過");
+      return;
+    }
+    const id = item.dataset.id;
+    if(!startObserve(id)){
+      const names = {
+        "1":"A+M 符號","2":"雙手張開","3":"六根燭台"
+      };
+      showToast("觀察「" + names[id] + "」（後續畫面開發中）");
+    }
+  });
+});
+
+// ===== 線索推理板交互 =====
+document.querySelectorAll(".rcard").forEach(card=>{
+  card.addEventListener("click", ()=>{
+    initAudio();
+    card.classList.toggle("opened");
+    sfxPaper();
+  });
+});
+
+document.querySelectorAll(".rchoice").forEach(ch=>{
+  ch.addEventListener("click", ()=>{
+    initAudio();
+    if(ch.dataset.answer === "correct"){
+      ch.classList.add("correct");
+      document.querySelectorAll(".rchoice").forEach(c=>c.style.pointerEvents="none");
+      document.getElementById("reasoningResult").classList.add("show");
+      vibrate([50,50,50]);
+      sfxPaper();
+      setTimeout(()=>{
+        document.getElementById("reasoningPanel").classList.remove("show");
+        setTimeout(()=>{
+          scp_dlgBox.classList.add("show");
+          sfxPaper();
+          vibrate(10);
+          scp_wrapIdx = 0;
+          showWrapLine(0);
+        }, 600);
+      }, 1800);
+    } else {
+      ch.classList.add("wrong");
+      vibrate(200);
+      setTimeout(()=>ch.classList.remove("wrong"), 800);
+      showToast("再想想……三條線索的交點在哪？");
+    }
+  });
+});
+
+// ===== 收尾對話（推理正確後） =====
+const scp_wrapDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"三條線索——保護範圍、向下傾瀉、中心位置——全部指向主祭壇的祭台桌。" },
+  { speaker:"elena", name:"艾蓮娜", text:"所以鄭一藏東西的地方，不在側堂，而在主祭壇……走吧。" }
+];
+let scp_wrapIdx = 0;
+let scp_inWrap = false;
+
+// ===== 主祭壇對話 =====
+const scp_altarDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"到了……這就是鄭一說的『她護住的地方』。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……祭台正面刻著三個圓牌——中間那個，好像是主教冠。" },
+  { speaker:"zhujiao", name:"主角", text:"等等……歷任澳門總督上任時，都要把權杖放在聖母像旁祈求庇護。" },
+  { speaker:"elena", name:"艾蓮娜", text:"那麼，如果我們按下這個象徵權力的王冠的話……" }
+];
+let scp_altarIdx = 0;
+let scp_inAltar = false;
+
+function showAltarLine(index){
+  if(index >= scp_altarDialogues.length){
+    scp_inAltar = false;
+    scp_dlgBox.classList.remove("show");
+    // 彈出「按下主教冠圓牌」按鈕
+    setTimeout(()=>{
+      const btn = document.getElementById("pressBtn");
+      btn.classList.add("show");
+    }, 500);
+    return;
+  }
+  const line = scp_altarDialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function showWrapLine(index){
+  if(index >= scp_wrapDialogues.length){
+    scp_inWrap = false;
+    scp_dlgBox.classList.remove("show");
+    setTimeout(()=>{
+      sfxFootsteps();
+      const ov = document.getElementById("transOverlay");
+      ov.classList.remove("fade-out");
+      ov.style.opacity = "1";
+      setTimeout(()=>{
+        window.location.href = "8.html";
+      }, 1200);
+    }, 500);
+    return;
+  }
+  scp_inWrap = true;
+  const line = scp_wrapDialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_isTyping = true;
+  let charIndex = 0;
+  const text = line.text;
+  clearInterval(scp_typeTimer);
+  scp_typeTimer = setInterval(()=>{
+    if(charIndex < text.length){
+      scp_dlgText.innerHTML = text.substring(0, charIndex+1) + '<span class="dialog-cursor"></span>';
+      charIndex++;
+      if(charIndex % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_typeTimer);
+      scp_isTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+// ============================================================
+// Toast
+// ============================================================
+let scp_toastTimer = null;
+function scp_showToast(msg, duration){
+  duration = duration || 2000;
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(scp_toastTimer);
+  scp_toastTimer = setTimeout(()=>{ toast.classList.remove("show"); }, duration);
+}
+
+// ============================================================
+// 場景啟動：轉場淡入 → 背景 → 標題欄 → 對話
+// ============================================================
+window.addEventListener("load", ()=>{
+  const transOverlay = document.getElementById("transOverlay");
+  const bgLayer = document.getElementById("bgLayer");
+  const topBar = document.getElementById("topBar");
+
+  // 步驟1：背景顯示
+  bgLayer.classList.add("show");
+
+  // 步驟2：轉場遮罩淡出（0.8s）
+  setTimeout(()=>{
+    transOverlay.classList.add("fade-out");
+  }, 300);
+
+  // 步驟3：標題欄淡入
+  setTimeout(()=>{
+    topBar.classList.add("show");
+  }, 600);
+
+  // 步驟4：對話框彈出 + 第一句台詞
+  setTimeout(()=>{
+    scp_dlgBox.classList.add("show");
+    sfxPaper();
+    vibrate(10);
+    showDialogue(0);
+  }, 1400);
+});
+
+// ============================================================
+// 按壓主教冠 → 密碼筒
+// ============================================================
+function pressMitre(){
+  initAudio();
+  const btn = document.getElementById("pressBtn");
+  btn.classList.remove("show");
+  vibrate([30,80,30,80,30]);
+  sfxWoodTick();
+  setTimeout(()=>{
+    document.getElementById("boxModal").classList.add("show");
+  }, 800);
+}
+
+function openNote(){
+  initAudio();
+  sfxPaper();
+  vibrate(10);
+  document.getElementById("paperDetail").classList.add("show");
+}
+
+function closeNote(){
+  scp_altarDialogueActive = false;
+  setTimeout(()=>{
+    scp_postNoteDialoguesIdx = 0;
+    scp_dlgBox.classList.add("show");
+    showPostNoteLine(0);
+  }, 300);
+}
+
+// ============================================================
+// 紙條後對話系統
+// ============================================================
+const scp_postNoteDialogues = [
+  { speaker:"zhujiao", name:"主角", text:"從神聖的福音書開始……之前解出的密碼是2416，就是從聖經章節來的。" },
+  { speaker:"zhujiao", name:"主角", text:"2、4、1、6……兩兩一組？第二行第四字、第一行第六字……不对，才兩個字。" },
+  { speaker:"elena", name:"艾蓮娜", text:"密碼筒是三個圓環。也許2416裡只用了三個座標——第二行第四字、第四行第一字、第一行第六字。" },
+  { speaker:"zhujiao", name:"主角", text:"第二行第四字是盡，第四行第一字是金，第一行第六字是海——三個起點。" },
+  { speaker:"elena", name:"艾蓮娜", text:"以五為階梯，登天使之塔……從每個起點往後數五個字。" },
+  { speaker:"zhujiao", name:"主角", text:"盡往後五字是霧，金往後五字是滄，海往後五字是盡。霧、滄、盡——拼音首字母W、C、J。" },
+  { speaker:"elena", name:"艾蓮娜", text:"信鴿會帶你去往最後的答案……之前側堂數到的七個小天使，就是七步——把W、C、J各往後移七位。" }
+];
+let scp_postNoteDialoguesIdx = 0;
+let scp_postNoteTyping = false;
+let scp_postNoteTimer = null;
+
+function showPostNoteLine(index){
+  if(index >= scp_postNoteDialogues.length){
+    scp_dlgBox.classList.remove("show");
+    scp_dlgHint.style.display = "none";
+    setTimeout(()=>{
+      document.getElementById("lockOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = scp_postNoteDialogues[index];
+  scp_dlgDot.className = "speaker-dot " + line.speaker;
+  scp_dlgName.className = "speaker-name " + line.speaker;
+  scp_dlgName.textContent = line.name;
+  scp_dlgText.innerHTML = "";
+  scp_dlgHint.style.display = "none";
+  scp_postNoteTyping = true;
+  let i = 0;
+  const text = line.text;
+  scp_postNoteTimer = setInterval(()=>{
+    if(i < text.length){
+      scp_dlgText.innerHTML = text.substring(0, i+1) + '<span class="dialog-cursor"></span>';
+      i++;
+      if(i % 3 === 0) sfxWoodTick();
+    } else {
+      clearInterval(scp_postNoteTimer);
+      scp_postNoteTyping = false;
+      scp_dlgText.innerHTML = text;
+      scp_dlgHint.style.display = "block";
+    }
+  }, 40);
+}
+
+function completePostNoteTyping(){
+  clearInterval(scp_postNoteTimer);
+  scp_dlgText.innerHTML = scp_postNoteDialogues[scp_postNoteDialoguesIdx].text;
+  scp_postNoteTyping = false;
+  scp_dlgHint.style.display = "block";
+}
+
+// ============================================================
+// 密碼鎖
+// ============================================================
+function showHint(){
+  initAudio();
+  showToast("把W、C、J各往後挪七位");
+}
+
+let scp_currentLetters = [0,0,0];
+const scp_ANSWER = [3,9,16]; // D,J,Q
+
+function changeLetter(wheel, dir){
+  initAudio();
+  sfxWoodTick();
+  scp_currentLetters[wheel] = (scp_currentLetters[wheel] + dir + 26) % 26;
+  document.getElementById("letter"+wheel).textContent = String.fromCharCode(65 + scp_currentLetters[wheel]);
+}
+
+function checkLock(){
+  let correct = true;
+  for(let i=0;i<3;i++){
+    if(scp_currentLetters[i] !== scp_ANSWER[i]){ correct = false; break; }
+  }
+  if(correct){
+    sfxWoodTick();
+    vibrate([50,100,50,100,50]);
+    document.getElementById("lockOverlay").classList.remove("show");
+    setTimeout(()=>{
+      document.getElementById("openedOverlay").classList.add("show");
+      document.getElementById("openedOverlay").style.cursor = "pointer";
+      document.getElementById("openedOverlay").onclick = startFinale;
+    }, 600);
+  } else {
+    sfxWoodTick();
+    vibrate([200,50,200]);
+    const panel = document.querySelector(".lock-panel");
+    panel.style.animation = "none";
+    setTimeout(()=>{ panel.style.animation = "shake .4s"; }, 10);
+  }
+}
+
+// ============================================================
+// 通關結算對話
+// ============================================================
+const scp_finaleLines = [
+  { speaker:"鄭一的後人", text:"……你終於找到了。我是鄭一的後人，世代守著這個秘密。" },
+  { speaker:"鄭一的後人", text:"這位老先生當年縱橫南海，卻把一筆最大的財寶藏在了這座教堂裡。" },
+  { speaker:"鄭一的後人", text:"他留下的不僅是金銀——而是China（瓷器），這些瓷器都是景德鎮手工打造的產物。" },
+  { speaker:"鄭一的後人", text:"恭喜你，通關了。這是寶物庫，裡頭是我們世代收藏的精品，憑此畫面給你八折。" }
+];
+let scp_finaleIdx = 0;
+let scp_finaleTyping = false;
+
+function startFinale(){
+  initAudio();
+  document.getElementById("openedOverlay").classList.remove("show");
+  scp_finaleIdx = 0;
+  document.getElementById("finaleOverlay").classList.add("show");
+  showFinaleLine(0);
+}
+
+function showFinaleLine(index){
+  if(index >= scp_finaleLines.length){
+    document.getElementById("finaleOverlay").classList.remove("show");
+    const op = document.getElementById("openedOverlay");
+    op.classList.remove("show");
+    op.style.display = "none";
+    const pd = document.getElementById("paperDetail");
+    if(pd){ pd.classList.remove("show"); pd.style.display = "none"; }
+    const bm = document.getElementById("boxModal");
+    if(bm){ bm.classList.remove("show"); bm.style.display = "none"; }
+    setTimeout(()=>{
+      document.getElementById("vaultOverlay").classList.add("show");
+    }, 400);
+    return;
+  }
+  const line = scp_finaleLines[index];
+  document.getElementById("finaleSpeaker").textContent = line.speaker;
+  document.getElementById("finaleText").innerHTML = "";
+  document.getElementById("finaleHint").style.display = "none";
+  scp_finaleTyping = true;
+  let i = 0;
+  const text = line.text;
+  const timer = setInterval(()=>{
+    if(i < text.length){
+      document.getElementById("finaleText").innerHTML = text.substring(0, i+1);
+      i++;
+    } else {
+      clearInterval(timer);
+      scp_finaleTyping = false;
+      document.getElementById("finaleText").innerHTML = text;
+      document.getElementById("finaleHint").style.display = "block";
+    }
+  }, 35);
+  window._finaleTimer = timer;
+}
+
+document.getElementById("finaleOverlay").addEventListener("click", ()=>{
+  initAudio();
+  if(scp_finaleTyping){
+    clearInterval(window._finaleTimer);
+    document.getElementById("finaleText").innerHTML = scp_finaleLines[scp_finaleIdx].text;
+    scp_finaleTyping = false;
+    document.getElementById("finaleHint").style.display = "block";
+    return;
+  }
+  scp_finaleIdx++;
+  showFinaleLine(scp_finaleIdx);
+});
+
+function showEnding(){
+  initAudio();
+  document.getElementById("vaultOverlay").classList.remove("show");
+  setTimeout(()=>{
+    document.getElementById("endingOverlay").classList.add("show");
+  }, 400);
+}
+
+</script>
+
+</body>
+</html>
