@@ -1,607 +1,566 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>海盜王的遺產：塵封的大三巴 (直屏無損全屏版)</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --bg-dark: #0b0f19;
-            --panel-bg: rgba(15, 23, 42, 0.93); 
-            --panel-border: rgba(251, 191, 36, 0.35); 
-            --accent-gold: #fbbf24;
-            --accent-glow: rgba(251, 191, 36, 0.3);
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --character-elena: #38bdf8;
-            --character-mc: #fb7185;
-            --accent-red: #ef4444;
-            --accent-green: #10b981;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>澳門鄭一寶藏密碼</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0604;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
 
-        * {
-            box-sizing: border-box;
-            margin: 0; padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-        }
+/* ===== 背景層 ===== */
+.bg{position:fixed;inset:0;z-index:1;background:url("assets/hero_bg.jpg") center center/cover no-repeat}
+.bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,6,4,.55) 0%,rgba(10,6,4,.25) 35%,rgba(10,6,4,.45) 65%,rgba(10,6,4,.85) 100%)}
 
-        body, html {
-            background-color: #020617;
-            color: var(--text-main);
-            font-family: 'Noto Serif TC', serif;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            position: fixed; /* 禁用 iOS 橡皮筋回彈 */
-        }
+/* ===== 內容層 ===== */
+.content{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 48px) 28px calc(env(safe-area-inset-bottom,0px) + 40px);text-align:center}
 
-        /* 遊戲主容器：直接物理滿版，防瀏海遮擋 */
-        #game-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-        }
+/* 頂部標籤 */
+.top-tag{display:inline-flex;align-items:center;gap:8px;padding:7px 18px;border:1px solid rgba(212,168,87,.45);border-radius:20px;background:rgba(10,6,4,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;animation:fadeDown .8s .3s ease forwards}
+.top-tag span{font-size:12px;letter-spacing:3px;color:#d4a857;font-weight:500;text-transform:uppercase}
+.top-tag .dot{width:5px;height:5px;border-radius:50%;background:#d4a857;animation:pulse 2s ease-in-out infinite}
 
-        /* 頂部快捷操作欄 (保存/控制) */
-        .top-nav-bar {
-            position: absolute;
-            top: calc(12px + env(safe-area-inset-top));
-            right: 16px;
-            z-index: 50;
-            display: flex;
-            gap: 10px;
-        }
+/* 標題區 */
+.title-area{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px}
+.title-sub{font-size:13px;letter-spacing:6px;color:rgba(212,168,87,.8);font-weight:400;opacity:0;animation:fadeUp .8s .5s ease forwards}
+.title-main{font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(38px,9vw,64px);font-weight:900;color:#f0d9a8;line-height:1.2;letter-spacing:4px;text-shadow:0 2px 20px rgba(0,0,0,.7),0 0 40px rgba(212,168,87,.25);opacity:0;animation:fadeUp 1s .7s ease forwards}
+.title-main .accent{color:#e8b84d}
+.title-divider{display:flex;align-items:center;gap:12px;opacity:0;animation:fadeUp .8s .9s ease forwards}
+.title-divider .line{width:40px;height:1px;background:linear-gradient(to right,transparent,rgba(212,168,87,.6))}
+.title-divider .line.r{background:linear-gradient(to left,transparent,rgba(212,168,87,.6))}
+.title-divider .diamond{width:6px;height:6px;transform:rotate(45deg);background:#d4a857}
+.title-desc{font-size:14px;line-height:1.8;color:rgba(232,220,200,.75);max-width:300px;font-weight:300;letter-spacing:1px;opacity:0;animation:fadeUp .8s 1.1s ease forwards}
 
-        .nav-btn {
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid var(--panel-border);
-            color: var(--text-main);
-            padding: 8px 14px;
-            font-size: 13px;
-            border-radius: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .nav-btn:active { transform: scale(0.92); border-color: var(--accent-gold); }
+/* 底部按鈕 */
+.bottom-area{width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;animation:fadeUp .8s 1.3s ease forwards}
+.start-btn{position:relative;width:100%;max-width:320px;padding:16px 0;border:none;border-radius:8px;background:linear-gradient(135deg,#c8953a 0%,#e8b84d 50%,#c8953a 100%);color:#1a1008;font-family:"Noto Serif TC",serif;font-size:18px;font-weight:700;letter-spacing:6px;cursor:pointer;box-shadow:0 4px 24px rgba(200,149,58,.4),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .15s ease,box-shadow .15s ease}
+.start-btn:active{transform:scale(.97);box-shadow:0 2px 12px rgba(200,149,58,.3)}
+.start-btn::before{content:"";position:absolute;inset:0;border-radius:8px;border:1px solid rgba(255,255,255,.2);pointer-events:none}
+.brand{font-size:11px;letter-spacing:2px;color:rgba(232,220,200,.4);font-weight:300}
 
-        /* 處罰震動效果（套用在核心面板上，防止整個螢幕晃動導致瀏覽器露底） */
-        .shake { animation: panelShake 0.4s linear; }
+/* ===== 動畫 ===== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 
-        /* 背景層：使用 cover 確保「不扭曲、不變形、完全填滿」 */
-        .background-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; 
-            background-position: center center;
-            transition: background-image 0.6s ease-in-out;
-            z-index: 1;
-        }
+/* 轉場黑幕 */
+.fade-overlay{position:fixed;inset:0;z-index:99;background:#000;opacity:0;pointer-events:none;transition:opacity .8s ease;overflow:hidden}
+.fade-overlay.show{opacity:1;pointer-events:auto}
+.mystery-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(22px,5.5vw,36px);font-weight:600;color:#d4a857;letter-spacing:3px;line-height:1.8;text-align:center;opacity:0;text-shadow:0 0 30px rgba(212,168,87,.3);transition:opacity .7s ease;padding:0 30px;width:100%}
+.mystery-text.show{opacity:1}
+.mystery-text.hide{opacity:0}
 
-        .vignette {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%);
-            pointer-events: none; z-index: 2;
-        }
+/* 第二幕：鄭一 */
+.scene2-bg{position:absolute;inset:0;background:url("assets/scene2_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 2s ease}
+.scene2-bg.show{opacity:1}
+.scene2-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.1) 40%,rgba(0,0,0,.6) 100%)}
+.scene2-text{position:absolute;bottom:15%;left:50%;transform:translateX(-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(18px,4.5vw,30px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.8);transition:opacity .8s ease;padding:0 30px;width:100%}
+.scene2-text.show{opacity:1}
+.scene2-text .year{color:#e8b84d;font-size:1.15em}
 
-        /* 響應式場景層 */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; display: none; flex-direction: column;
-            padding: 20px;
-        }
-        .screen.active { display: flex; }
+/* 第三幕：藏寶 */
+.scene3-bg{position:absolute;inset:0;background:url("assets/scene3_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.8s ease}
+.scene3-bg.show{opacity:1}
+.scene3-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.2) 0%,rgba(0,0,0,.1) 40%,rgba(0,0,0,.65) 100%)}
+.scene3-text{position:absolute;bottom:15%;left:50%;transform:translateX(-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(18px,4.5vw,30px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.85);transition:opacity .8s ease;padding:0 30px;width:100%}
+.scene3-text.show{opacity:1}
 
-        /* ==========================================================================
-           1. 標題畫面
-           ========================================================================= */
-        #title-screen { justify-content: center; align-items: center; text-align: center; }
-        .title-logo { margin-bottom: 40px; animation: fadeInDown 1s ease; }
-        .title-logo h1 { font-size: 38px; color: var(--accent-gold); letter-spacing: 4px; margin-bottom: 12px; text-shadow: 0 0 15px var(--accent-glow); }
-        .title-logo p { font-size: 15px; color: var(--text-muted); letter-spacing: 2px; }
-        
-        .menu-btn-group { display: flex; flex-direction: column; gap: 14px; width: 220px; }
-        .menu-btn {
-            background: var(--panel-bg); border: 2px solid var(--panel-border);
-            color: var(--text-main); padding: 14px 0; font-size: 16px; border-radius: 30px;
-            cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6); width: 100%;
-        }
-        .menu-btn:active { transform: scale(0.95); border-color: var(--accent-gold); }
-        .menu-btn.secondary { border-color: rgba(148, 163, 184, 0.3); color: var(--text-muted); }
+/* 第四幕：澳門街巷 */
+.scene4-bg{position:absolute;inset:0;background:url("assets/scene4_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.8s ease}
+.scene4-bg.show{opacity:1}
+.scene4-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,.1) 35%,rgba(0,0,0,.7) 100%)}
+.scene4-text{position:absolute;bottom:12%;left:50%;transform:translateX(-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(16px,4vw,26px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.9);transition:opacity .8s ease;padding:0 30px;width:100%}
+.scene4-text.show{opacity:1}
 
-        /* ==========================================================================
-           2. 劇情冒險畫面（純對話框佈局）
-           ========================================================================= */
-        #adventure-screen { justify-content: flex-end; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
-        
-        /* 下置型對話框 */
-        .dialogue-box {
-            background: var(--panel-bg); border: 2px solid rgba(51, 65, 85, 0.85);
-            border-radius: 16px; padding: 20px; width: 100%; min-height: 145px;
-            position: relative; backdrop-filter: blur(12px); cursor: pointer; z-index: 10;
-            -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.6);
-        }
-        .character-name { font-size: 18px; font-weight: bold; margin-bottom: 6px; display: inline-block; border-bottom: 2px solid transparent; }
-        .character-name.elena { color: var(--character-elena); border-color: var(--character-elena); }
-        .character-name.mc { color: var(--character-mc); border-color: var(--character-mc); }
-        .character-name.system { color: var(--accent-gold); border-color: var(--accent-gold); }
-        
-        /* 打字機文本容器 */
-        .dialogue-text { font-size: 15px; line-height: 1.6; color: #e2e8f0; min-height: 48px; }
-        .dialogue-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .prev-indicator { color: var(--text-muted); font-size: 12px; padding: 4px 8px; background: rgba(255,255,255,0.05); border-radius: 4px; }
-        .next-indicator { color: var(--accent-gold); animation: pulse 1.5s infinite; font-size: 12px; }
+/* 第五幕：鄭一筆記 */
+.scene5-bg{position:absolute;inset:0;background:url("assets/scene5_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.8s ease}
+.scene5-bg.show{opacity:1}
+.scene5-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.2) 0%,rgba(0,0,0,.1) 40%,rgba(0,0,0,.65) 100%)}
+.scene5-text{position:absolute;bottom:12%;left:50%;transform:translateX(-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(16px,4vw,26px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.9);transition:opacity .8s ease;padding:0 30px;width:100%}
+.scene5-text.show{opacity:1}
 
-        /* ==========================================================================
-           3. 解密互動畫面
-           ========================================================================= */
-        #puzzle-screen { justify-content: center; align-items: center; z-index: 20; background: rgba(2, 6, 23, 0.5); }
-        
-        .center-puzzle-panel {
-            width: 100%;
-            max-width: 350px; 
-            background: var(--panel-bg); border: 2px solid var(--panel-border);
-            border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 12px;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); animation: fadeInDown 0.4s ease;
-        }
-        
-        .puzzle-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(251, 191, 36, 0.2); padding-bottom: 8px; }
-        .puzzle-title { font-size: 15px; color: var(--accent-gold); display: flex; align-items: center; gap: 6px; }
-        .hp-container { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--accent-red); background: rgba(239, 68, 68, 0.12); padding: 3px 10px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.25); }
-        
-        .center-cipher-box { text-align: center; background: rgba(2, 6, 23, 0.85); padding: 12px; border-radius: 10px; border: 1px dashed rgba(251, 191, 36, 0.25); }
-        .cipher-title { font-size: 10px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 2px; }
-        .engraved-cipher { font-family: 'Share Tech Mono', monospace; font-size: 34px; letter-spacing: 6px; font-weight: 700; color: #fef08a; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
-        
-        .clue-box { background: rgba(2, 6, 23, 0.4); border-left: 3px solid var(--accent-gold); padding: 8px 12px; font-size: 12.5px; color: #cbd5e1; line-height: 1.45; }
-        
-        .inputs-row { display: flex; flex-direction: column; gap: 10px; }
-        .input-group { display: flex; flex-direction: column; gap: 4px; }
-        .input-group label { font-size: 11.5px; color: var(--text-muted); }
-        .input-group input { 
-            background: #020617; border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 8px; 
-            padding: 11px 12px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; 
-            font-size: 14px; text-transform: uppercase; -webkit-appearance: none; 
-        }
-        .input-group input:focus { outline: none; border-color: var(--accent-gold); box-shadow: 0 0 8px var(--accent-glow); }
-        
-        .matrix-preview { background: #020617; border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 6px; padding: 6px; overflow-x: auto; }
-        .matrix-row { font-family: 'Share Tech Mono', monospace; color: var(--text-muted); line-height: 1.2; font-size: 9.5px; text-align: center; white-space: nowrap; }
-        
-        .action-container { display: flex; gap: 8px; margin-top: 4px; }
-        .btn-action { flex: 1; padding: 12px 6px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Noto Serif TC', serif; -webkit-tap-highlight-color: transparent; }
-        .btn-submit { background: var(--accent-gold); color: #020617; border: none; }
-        .btn-hint { background: transparent; border: 1px solid rgba(148, 163, 184, 0.25); color: var(--text-muted); }
-        .btn-back { background: transparent; border: 1px solid rgba(148, 163, 184, 0.25); color: var(--text-muted); }
-        
-        .feedback-msg { font-size: 11.5px; color: var(--accent-red); min-height: 16px; opacity: 0; text-align: center; line-height: 1.3; }
-        .feedback-msg.visible { opacity: 1; }
+/* 第六幕：抵達澳門 */
+.scene6-bg{position:absolute;inset:0;background:url("assets/scene6_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.8s ease}
+.scene6-bg.show{opacity:1}
+.scene6-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.1) 40%,rgba(0,0,0,.6) 100%)}
+.scene6-text{position:absolute;bottom:12%;left:50%;transform:translateX(-50%);font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(18px,4.5vw,28px);font-weight:600;color:#fff;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.8);transition:opacity .8s ease;padding:0 30px;width:100%}
+.scene6-text.show{opacity:1}
 
-        /* ==========================================================================
-           4. 完整版驗證畫面
-           ========================================================================= */
-        #verify-screen { justify-content: center; align-items: center; z-index: 30; background: rgba(2, 6, 23, 0.85); }
-        .verify-card {
-            width: 100%; max-width: 350px;
-            background: var(--panel-bg); border: 2px solid var(--panel-border);
-            border-radius: 20px; padding: 24px 20px; text-align: center;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9); backdrop-filter: blur(12px);
-            animation: fadeInDown 0.4s ease; display: flex; flex-direction: column; gap: 16px;
-        }
-        .verify-badge {
-            font-size: 12px; color: var(--accent-gold); background: rgba(251, 191, 36, 0.15);
-            padding: 4px 12px; border-radius: 20px; border: 1px solid var(--panel-border);
-            align-self: center; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .verify-title { font-size: 20px; font-weight: bold; color: var(--text-main); letter-spacing: 1px; }
-        .verify-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; text-align: left; background: rgba(2, 6, 23, 0.5); padding: 12px; border-radius: 10px; border-left: 3px solid #ef4444; }
-        .verify-desc span { color: var(--accent-gold); font-weight: bold; }
-        .password-input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-        .password-input-group label { font-size: 12px; color: var(--text-muted); }
-        .password-input-group input {
-            background: #020617; border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 8px;
-            padding: 12px; color: var(--accent-gold); font-family: 'Share Tech Mono', monospace;
-            font-size: 18px; text-align: center; letter-spacing: 4px; outline: none;
-        }
-        .password-input-group input:focus { border-color: var(--accent-gold); box-shadow: 0 0 10px var(--accent-glow); }
+/* 第七幕：四宮格地標 */
+.scene7-bg{position:absolute;inset:0;background:radial-gradient(ellipse at center,#1a1208 0%,#0a0604 100%);opacity:0;transition:opacity 1s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 24px}
+.scene7-bg.show{opacity:1}
+.scene7-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:420px}
+.scene7-grid .cell{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;opacity:0;transform:scale(.92);transition:opacity .6s ease,transform .6s ease;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.scene7-grid .cell.wide{grid-column:1/-1;aspect-ratio:16/9}
+.scene7-grid .cell img{width:100%;height:100%;object-fit:cover;display:block}
+.scene7-grid .cell::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 50%,rgba(0,0,0,.4) 100%)}
+.scene7-grid .cell .label{position:absolute;bottom:8px;left:10px;right:10px;font-size:12px;color:#f0e6d2;font-weight:500;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,.8);z-index:2}
+.scene7-bg.show .scene7-grid .cell{opacity:1;transform:scale(1)}
+.scene7-bg.show .scene7-grid .cell:nth-child(1){transition-delay:.1s}
+.scene7-bg.show .scene7-grid .cell:nth-child(2){transition-delay:.35s}
+.scene7-bg.show .scene7-grid .cell:nth-child(3){transition-delay:.6s}
+.scene7-bg.show .scene7-grid .cell:nth-child(4){transition-delay:.85s}
+.scene7-bg.show .scene7-grid .cell:nth-child(5){transition-delay:1.1s}
+.scene7-text{font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(15px,3.8vw,22px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:1.9;text-align:center;opacity:0;text-shadow:0 2px 12px rgba(0,0,0,.8);transition:opacity .8s ease;max-width:420px}
+.scene7-bg.show .scene7-text{opacity:1;transition-delay:1.4s}
 
-        /* Toast 提示框 */
-        #toast {
-            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-            background: rgba(16, 185, 129, 0.9); color: #fff; padding: 8px 18px;
-            border-radius: 20px; font-size: 13px; z-index: 100; opacity: 0;
-            pointer-events: none; transition: opacity 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        #toast.visible { opacity: 1; }
+/* 第八幕：謎題輪播 */
+.scene8-bg{position:absolute;inset:0;background:radial-gradient(ellipse at center,#15100a 0%,#080503 100%);opacity:0;transition:opacity 1s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:40px 24px}
+.scene8-bg.show{opacity:1}
+.scene8-slideshow{position:relative;width:100%;max-width:380px;aspect-ratio:3/4;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.scene8-slideshow .slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease}
+.scene8-slideshow .slide.active{opacity:1}
+.scene8-slideshow .slide img{width:100%;height:100%;object-fit:cover;display:block}
+.scene8-slideshow::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 60%,rgba(0,0,0,.3) 100%);pointer-events:none}
+.scene8-text{font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(14px,3.3vw,19px);font-weight:600;color:#f0e6d2;letter-spacing:2px;line-height:1.9;text-align:center;opacity:0;text-shadow:0 2px 12px rgba(0,0,0,.8);transition:opacity .8s ease;max-width:400px}
+.scene8-bg.show .scene8-text{opacity:1;transition-delay:.5s}
 
-        /* 背景圖片樣式 */
-        .bg-start { background-image: url('bg_start.jpg'); }
-        .bg-cave { background-image: url('bg_cave.jpg'); }
-        .bg-wall-glow { background-image: url('bg_wall_glow.jpg'); }
-        .bg-success { background-image: url('bg_success.jpg'); }
+/* 第九幕：收尾邀請 */
+.scene9-bg{position:absolute;inset:0;background:url("assets/hero_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.5s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding:40px 24px}
+.scene9-bg.show{opacity:1}
+.scene9-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.2) 40%,rgba(0,0,0,.5) 100%)}
+.scene9-text{position:relative;z-index:2;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(20px,5vw,30px);font-weight:700;color:#f5e6c8;letter-spacing:3px;line-height:1.8;text-align:center;opacity:0;text-shadow:0 2px 20px rgba(0,0,0,.9);transition:opacity 1s ease}
+.scene9-bg.show .scene9-text{opacity:1;transition-delay:.8s}
+.scene9-btn{position:relative;z-index:2;padding:14px 48px;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(16px,4vw,20px);font-weight:700;letter-spacing:4px;color:#3a2a10;background:linear-gradient(135deg,#e8c87a 0%,#d4a84a 50%,#c49a3a 100%);border:2px solid #f0d890;border-radius:50px;cursor:pointer;box-shadow:0 4px 24px rgba(212,168,74,.4),inset 0 1px 0 rgba(255,255,255,.3);opacity:0;transform:translateY(10px);transition:opacity 1s ease,transform 1s ease,box-shadow .3s ease}
+.scene9-bg.show .scene9-btn{opacity:1;transform:translateY(0);transition-delay:1.5s}
+.scene9-btn:hover{box-shadow:0 6px 32px rgba(212,168,74,.6),inset 0 1px 0 rgba(255,255,255,.4);transform:translateY(-2px)}
+.scene9-btn:active{transform:translateY(0)}
 
-        /* 動畫特製 */
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; transform: translateX(0); } 50% { opacity: 1; transform: translateX(3px); } }
-        @keyframes panelShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
-    </style>
+/* 第十幕：驗證成功，旅程開始 */
+.scene10-bg{position:absolute;inset:0;background:url("assets/scene10_bg.jpg") center center/cover no-repeat;opacity:0;transition:opacity 1.5s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:40px 24px}
+.scene10-bg.show{opacity:1}
+.scene10-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.2) 0%,rgba(0,0,0,.1) 40%,rgba(0,0,0,.55) 100%)}
+.scene10-text{position:relative;z-index:2;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(16px,4vw,22px);font-weight:600;color:#f5e6c8;letter-spacing:2px;line-height:2;text-align:center;opacity:0;text-shadow:0 2px 16px rgba(0,0,0,.9);transition:opacity 1s ease;max-width:420px}
+.scene10-bg.show .scene10-text{opacity:1;transition-delay:.8s}
+.scene10-location{position:relative;z-index:2;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(13px,3.2vw,17px);font-weight:500;color:#d4a84a;letter-spacing:4px;opacity:0;text-shadow:0 2px 10px rgba(0,0,0,.8);transition:opacity 1s ease}
+.scene10-bg.show .scene10-location{opacity:1;transition-delay:2s}
+.scene10-btn{position:relative;z-index:2;margin-top:8px;padding:13px 40px;font-family:"Noto Serif TC","Songti TC",serif;font-size:clamp(14px,3.6vw,18px);font-weight:700;letter-spacing:3px;color:#3a2a10;background:linear-gradient(135deg,#e8c87a 0%,#d4a84a 50%,#c49a3a 100%);border:2px solid #f0d890;border-radius:50px;cursor:pointer;box-shadow:0 4px 20px rgba(212,168,74,.4),inset 0 1px 0 rgba(255,255,255,.3);opacity:0;transform:translateY(10px);transition:opacity 1s ease,transform 1s ease,box-shadow .3s ease}
+.scene10-bg.show .scene10-btn{opacity:1;transform:translateY(0);transition-delay:3s}
+.scene10-btn:hover{box-shadow:0 6px 28px rgba(212,168,74,.6),inset 0 1px 0 rgba(255,255,255,.4);transform:translateY(-2px)}
+.scene10-btn:active{transform:translateY(0)}
+
+/* 驗證碼彈窗 */
+.code-modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s ease;padding:24px}
+.code-modal.show{opacity:1;pointer-events:auto}
+.code-card{background:linear-gradient(160deg,#2a1f12 0%,#1a1208 100%);border:1px solid rgba(212,168,74,.4);border-radius:16px;padding:32px 28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center;position:relative}
+.code-card .close-btn{position:absolute;top:14px;right:16px;background:none;border:none;color:#8a7a5a;font-size:22px;cursor:pointer;line-height:1}
+.code-card .close-btn:hover{color:#d4a84a}
+.code-card h3{font-family:"Noto Serif TC","Songti TC",serif;font-size:20px;color:#f0e6d2;margin:0 0 6px;letter-spacing:2px}
+.code-card .subtitle{font-size:13px;color:#a89878;margin-bottom:20px;line-height:1.6}
+.code-inputs{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.code-inputs input{width:48px;height:56px;text-align:center;font-size:24px;font-weight:700;color:#f0e6d2;background:rgba(255,255,255,.06);border:2px solid rgba(212,168,74,.3);border-radius:10px;outline:none;transition:border-color .3s,box-shadow .3s;font-family:"Noto Serif TC",monospace}
+.code-inputs input:focus{border-color:#d4a84a;box-shadow:0 0 0 3px rgba(212,168,74,.15)}
+.code-inputs input.filled{border-color:rgba(212,168,74,.6)}
+.code-submit{width:100%;padding:13px;font-family:"Noto Serif TC","Songti TC",serif;font-size:16px;font-weight:700;letter-spacing:3px;color:#3a2a10;background:linear-gradient(135deg,#e8c87a,#c49a3a);border:none;border-radius:10px;cursor:pointer;margin-bottom:16px;transition:opacity .3s,transform .1s}
+.code-submit:hover{opacity:.92}
+.code-submit:active{transform:scale(.98)}
+.code-hint{font-size:12px;color:#8a7a5a;line-height:1.8;border-top:1px solid rgba(212,168,74,.15);padding-top:14px}
+.code-hint .price{color:#e8c87a;font-weight:700;font-size:15px}
+.code-hint .coupon{color:#7fd4a0;font-weight:600}
+.code-error{color:#e87878;font-size:13px;margin-top:10px;min-height:18px;opacity:0;transition:opacity .3s}
+.code-error.show{opacity:1}
+
+/* 橫屏適配 */
+@media(orientation:landscape) and (max-height:500px){
+  .content{padding:20px 40px}
+  .title-main{font-size:clamp(28px,5vw,42px)}
+  .title-desc{display:none}
+}
+</style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="game-bg" class="background-layer bg-start"></div>
-        <div id="game-vignette" class="vignette"></div>
+<div class="bg"></div>
 
-        <!-- 全局保存按钮 (在剧情/解密界面显示) -->
-        <div class="top-nav-bar" id="top-nav-bar" style="display: none;">
-            <button class="nav-btn" onclick="saveGame()"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
-        </div>
+<div class="content">
+  <!-- 頂部標籤 -->
+  <div class="top-tag">
+    <span class="dot"></span>
+    <span>GlobalFun Go 實境解謎</span>
+  </div>
 
-        <!-- 提示 Toast -->
-        <div id="toast">已保存進度</div>
-
-        <div id="title-screen" class="screen active">
-            <div class="title-logo">
-                <h1>海盜王的遺產</h1>
-                <p>— 塵封的大三巴 —</p>
-            </div>
-            <div class="menu-btn-group">
-                <button class="menu-btn" onclick="startGame()">開啟調查</button>
-                <button class="menu-btn secondary" id="btn-continue" style="display: none;" onclick="loadGame()">繼續遊戲</button>
-            </div>
-        </div>
-
-        <div id="adventure-screen" class="screen">
-            <div class="dialogue-box" onclick="handleDialogueClick(event)">
-                <div id="char-name" class="character-name">系統</div>
-                <div id="char-text" class="dialogue-text"></div>
-                <div class="dialogue-footer">
-                    <div class="prev-indicator" onclick="prevDialogue(event)"><i class="fa-solid fa-chevron-left"></i> 上一句</div>
-                    <div class="next-indicator">點擊繼續 <i class="fa-solid fa-caret-right"></i></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="puzzle-screen" class="screen">
-            <div class="center-puzzle-panel" id="puzzle-panel">
-                <div class="puzzle-header">
-                    <div class="puzzle-title"><i class="fa-solid fa-key"></i> 維吉尼亞密碼解鎖</div>
-                    <div class="hp-container" id="hp-display"><i class="fa-solid fa-heart"></i> 剩餘: 3</div>
-                </div>
-                <div class="center-cipher-box">
-                    <div class="cipher-title">石壁刻印古密文 (CIPHERTEXT)</div>
-                    <div class="engraved-cipher">UPTUDH</div>
-                </div>
-                <div class="clue-box">
-                    <i class="fa-solid fa-scroll" style="color: var(--accent-gold); margin-right: 4px;"></i>
-                    「把那場災難之年的宣告（1835），化作英文字單字。用它作為鑰匙。」
-                </div>
-                
-                <div class="inputs-row">
-                    <div class="input-group">
-                        <label for="input-key"><i class="fa-solid fa-keyboard"></i> 輸入密鑰 (KEY)</label>
-                        <input text="text" id="input-key" placeholder="輸入對應英文單字" autocomplete="off">
-                    </div>
-                    <div class="input-group">
-                        <label for="input-answer"><i class="fa-solid fa-location-dot"></i> 還原後的最終目的地</label>
-                        <input text="text" id="input-answer" placeholder="例如: MACAU" autocomplete="off">
-                    </div>
-                </div>
-                
-                <div class="matrix-preview">
-                    <div class="matrix-row">A:0 B:1 C:2 D:3 E:4 F:5 G:6 H:7 I:8 J:9 K:10 L:11 M:12 N:13 O:14 P:15 Q:16...</div>
-                </div>
-                
-                <div id="puzzle-feedback" class="feedback-msg"></div>
-                
-                <div class="action-container">
-                    <button class="btn-action btn-back" onclick="exitPuzzleToPrev()"><i class="fa-solid fa-arrow-left"></i> 返回</button>
-                    <button class="btn-action btn-hint" onclick="getHint()">提示</button>
-                    <button class="btn-action btn-submit" onclick="checkPuzzle()">提交</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="verify-screen" class="screen">
-            <div class="verify-card" id="verify-panel">
-                <div class="verify-badge"><i class="fa-solid fa-flag-checkered"></i> 試玩版結束</div>
-                <div class="verify-title">感謝遊玩！</div>
-                <div class="verify-desc">
-                    恭喜完成第一章試玩！<br>
-                    正式遊戲與後續關卡請至 <span>小紅書主頁</span> 購買解鎖。<br>
-                    若您已獲得解鎖密碼，請在下方輸入解鎖後續內容：
-                </div>
-                <div class="password-input-group">
-                    <label for="input-pass"><i class="fa-solid fa-lock"></i> 請輸入通關密碼</label>
-                    <input type="password" id="input-pass" placeholder="****" maxlength="8" autocomplete="off">
-                </div>
-                <div id="verify-feedback" class="feedback-msg"></div>
-                <button class="btn-action btn-submit" style="width: 100%;" onclick="checkUnlockPassword()">驗證並進入正式版</button>
-            </div>
-        </div>
-
+  <!-- 標題區 -->
+  <div class="title-area">
+    <div class="title-sub">MACAU TREASURE HUNT</div>
+    <h1 class="title-main">澳門鄭一<br><span class="accent">寶藏密碼</span></h1>
+    <div class="title-divider">
+      <span class="line"></span>
+      <span class="diamond"></span>
+      <span class="line r"></span>
     </div>
+    <p class="title-desc">跟隨海盜鄭一的足跡，穿越澳門古城街巷，解開沉睡百年的寶藏之謎</p>
+  </div>
 
-    <script>
-        // --- 1. 劇本數據配置 ---
-        const script = [
-            { id: 0, name: "艾蓮娜", text: "（舉高火把，嗆得咳嗽）咳、咳……我的天，這裡至少有一百年沒人進來過了。我們真的找對地方了嗎？", bg: "bg-cave", nameClass: "elena" },
-            { id: 1, name: "主角", text: "傳說紅旗幫的海盜王鄭一，在接受朝廷招安前，將他大半生的秘寶藏在了伶仃洋。關於寶藏的線索則藏在了....。", bg: "bg-cave", nameClass: "mc" },
-            { id: 2, name: "艾蓮娜", text: "快看前面！那面粗糙的石壁上……好像刻著西洋人的英文字母！", bg: "bg-wall-glow", nameClass: "elena" },
-            { id: 3, name: "主角", text: "這不對勁。鄭一可是活躍在清代年間的中國海盜，為什麼會留下這種密碼？字跡很新，這顯然被他們的後人『更新』過。", bg: "bg-wall-glow", nameClass: "mc" },
-            { id: 4, name: "艾蓮娜", text: "提示上寫著：『把那場災難之年的宣告（1835），化作高貴的異國之語……』1835年到底發生了什麼災難？", bg: "bg-wall-glow", nameClass: "elena" },
-            { id: 5, name: "主角", text: "1835年……那一年在遠東發生最震撼的事，莫過於聖保羅大教堂的那場徹夜大火，將整座宏偉的建築燒得只剩下一面正門前壁。", bg: "bg-wall-glow", nameClass: "mc" },
-            { id: 6, name: "艾蓮娜", text: "啊！也就是現在澳門著名的——大三巴牌坊！那場大火在當時被形容為一場徹頭徹尾的『災難』！", bg: "bg-wall-glow", nameClass: "elena" },
-            { id: 7, name: "主角", text: "沒錯，『災難』的英文單字就是關鍵。艾蓮娜，幫我展開密碼對照表，我們必須解開這面牆上的多表密碼鎖！", bg: "bg-wall-glow", nameClass: "mc", triggerPuzzle: true },
-            { id: 8, name: "艾蓮娜", text: "（石壁內傳出沉重的齒輪咬合聲）成功了！明文真的還原出了『S.PAULO』！也就是聖保羅大教堂！", bg: "bg-success", nameClass: "elena" },
-            { id: 9, name: "主角", text: "大火之後，教堂廢墟成了無人看管的荒地，魚龍混雜。海盜餘部把真正的祕寶轉移到了大三巴牌坊的地底！", bg: "bg-success", nameClass: "mc" },
-            { id: 10, name: "艾蓮娜", text: "太棒了！找到了下一個目的地指引。事不宜遲，我們的下一站：澳門，大三巴牌坊！", bg: "bg-success", nameClass: "elena" },
-            { id: 11, name: "系統", text: "【第一章：塵封的聖保羅之火】試玩結束，即將進入驗證頁面……", bg: "bg-start", nameClass: "system", triggerVerify: true }
-        ];
+  <!-- 底部 -->
+  <div class="bottom-area">
+    <button class="start-btn" onclick="startGame()">開 始 冒 險</button>
+    <div class="brand">GlobalFun Go &copy; 2026</div>
+  </div>
+</div>
 
-        let currentIndex = 0;
-        let hintCount = 0;
-        let playerHP = 3; 
+<div class="fade-overlay" id="fadeOverlay">
+  <div class="scene2-bg" id="scene2Bg"></div>
+  <div class="scene3-bg" id="scene3Bg"></div>
+  <div class="scene4-bg" id="scene4Bg"></div>
+  <div class="scene5-bg" id="scene5Bg"></div>
+  <div class="scene6-bg" id="scene6Bg"></div>
+  <div class="mystery-text" id="mysteryText">澳門這座城市，<br>藏著什麼秘密？</div>
+  <div class="scene2-text" id="scene2Text"><span class="year">三百年前，</span><br>"大名鼎鼎"的海盜鄭一，<br>迎來了自己的末日。</div>
+  <div class="scene3-text" id="scene3Text">在最後的時候，<br>他把自己的寶藏藏了起來。</div>
+  <div class="scene4-text" id="scene4Text">沒有人知道他把寶藏藏在了哪裡，<br>只知道他把找到寶藏的線索，<br>藏進了澳門的大街小巷之中。</div>
+  <div class="scene5-text" id="scene5Text">時至今日，你和你的朋友們，<br>在無意中得到了記載線索的<br>鄭一筆記。</div>
+  <div class="scene6-text" id="scene6Text">於是，你們決定來澳門碰碰運氣。</div>
+  <div class="scene7-bg" id="scene7Bg">
+    <div class="scene7-grid">
+      <div class="cell"><img src="assets/scene7_nezha.jpg" alt="大三巴哪吒廟"><span class="label">大三巴哪吒廟</span></div>
+      <div class="cell"><img src="assets/scene7_cathedral.jpg" alt="澳門主教座堂"><span class="label">澳門主教座堂</span></div>
+      <div class="cell"><img src="assets/scene7_lujia.jpg" alt="盧家大屋"><span class="label">盧家大屋</span></div>
+      <div class="cell"><img src="assets/scene7_landmark4.png" alt="大三巴牌坊"><span class="label">大三巴牌坊</span></div>
+      <div class="cell wide"><img src="assets/scene7_love_lane.png" alt="戀愛巷"><span class="label">戀愛巷</span></div>
+    </div>
+    <div class="scene7-text">你們將跟隨手機線索的指引，<br>重新探索澳門的經典地標，<br>讀取其中隱藏的秘密。</div>
+  </div>
+  <div class="scene8-bg" id="scene8Bg">
+    <div class="scene8-slideshow" id="scene8Slideshow">
+      <div class="slide active"><img src="assets/scene8_puzzle1.png" alt="石壁暗記探測"></div>
+      <div class="slide"><img src="assets/scene8_puzzle2.png" alt="漢字矩陣"></div>
+      <div class="slide"><img src="assets/scene8_puzzle3.png" alt="窗戶密碼"></div>
+      <div class="slide"><img src="assets/scene8_puzzle4.png" alt="哨點連通圖"></div>
+      <div class="slide"><img src="assets/scene8_puzzle5.png" alt="雙鑰解碼器"></div>
+    </div>
+    <div class="scene8-text">一路上你會遇到各種謎題，<br>需要你通過對現場的仔細觀察和推理，<br>獲取一層層前進的線索。</div>
+  </div>
+  <div class="scene9-bg" id="scene9Bg">
+    <div class="scene9-text">那麼，你要加入這場探索麼？</div>
+    <button class="scene9-btn" onclick="startJourney()">開 始 旅 程</button>
+  </div>
+  <div class="scene10-bg" id="scene10Bg">
+    <div class="scene10-text">那就讓我們開始這場旅程吧！<br>首先，前往大三巴牌坊。<br>我們的旅程將從那裡開始。</div>
+    <div class="scene10-location">— 第一站 · 大三巴牌坊 —</div>
+    <button class="scene10-btn" onclick="arrivedAtLocation()">我 已 到 達</button>
+  </div>
+</div>
 
-        // 打字機特效核心變數
-        let typewriterTimer = null;
-        let isTyping = false;
-        let currentFullText = "";
+<!-- 驗證碼彈窗 -->
+<div class="code-modal" id="codeModal">
+  <div class="code-card">
+    <button class="close-btn" onclick="closeCodeModal()">&times;</button>
+    <h3>玩家驗證碼</h3>
+    <p class="subtitle">請輸入4位驗證碼開啟旅程</p>
+    <div class="code-inputs">
+      <input type="text" maxlength="1" data-idx="0" autocomplete="off">
+      <input type="text" maxlength="1" data-idx="1" autocomplete="off">
+      <input type="text" maxlength="1" data-idx="2" autocomplete="off">
+      <input type="text" maxlength="1" data-idx="3" autocomplete="off">
+    </div>
+    <div class="code-error" id="codeError">驗證碼錯誤，請重試</div>
+    <button class="code-submit" onclick="verifyCode()">確 認 驗 證</button>
+    <div class="code-hint">
+      尚未獲得驗證碼？<br>
+      可在<strong>小紅書</strong>或<strong>店員</strong>處購買，<span class="price">價格 ¥69.9</span><br>
+      附贈 <span class="coupon">Guli 咖啡店內商品 8 折券</span>
+    </div>
+  </div>
+</div>
 
-        // 页面初始化检查是否有存档
-        window.onload = function() {
-            if (localStorage.getItem('pirate_legacy_save')) {
-                document.getElementById('btn-continue').style.display = 'block';
-            }
-        };
+<audio id="bgm" src="assets/bgm.wav" loop preload="auto"></audio>
+<audio id="voiceover" src="assets/voiceover.wav" preload="auto"></audio>
+<audio id="voiceover2" src="assets/voiceover2.wav" preload="auto"></audio>
+<audio id="voiceover3" src="assets/voiceover3.wav" preload="auto"></audio>
+<audio id="voiceover4" src="assets/voiceover4.wav" preload="auto"></audio>
+<audio id="voiceover5" src="assets/voiceover5.wav" preload="auto"></audio>
+<audio id="voiceover6" src="assets/voiceover6.wav" preload="auto"></audio>
+<audio id="voiceover7" src="assets/voiceover7.wav" preload="auto"></audio>
+<audio id="voiceover8" src="assets/voiceover8.wav" preload="auto"></audio>
+<audio id="voiceover9" src="assets/voiceover9.wav" preload="auto"></audio>
+<audio id="voiceover10" src="assets/voiceover10.wav" preload="auto"></audio>
+<audio id="clickSfx" src="assets/click.wav" preload="auto"></audio>
 
-        // --- 2. 打字機核心效果引擎 ---
-        function startTypewriter(text, elementId, speed = 40) {
-            clearInterval(typewriterTimer);
-            isTyping = true;
-            currentFullText = text;
-            const element = document.getElementById(elementId);
-            element.textContent = ""; 
-            
-            let charIndex = 0;
-            typewriterTimer = setInterval(() => {
-                if (charIndex < text.length) {
-                    element.textContent += text.charAt(charIndex);
-                    charIndex++;
-                } else {
-                    completeTypewriter();
-                }
-            }, speed);
-        }
+<script>
+var audioCtx = null;
+var waveGain = null;
+var waveStarted = false;
 
-        function completeTypewriter() {
-            clearInterval(typewriterTimer);
-            document.getElementById('char-text').textContent = currentFullText;
-            isTyping = false;
-        }
+// 海浪BGM：用 Web Audio API 合成
+function startWaveBGM(){
+  if(waveStarted) return;
+  waveStarted = true;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  var bufferSize = 2 * audioCtx.sampleRate;
+  var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  var output = noiseBuffer.getChannelData(0);
+  var lastOut = 0;
+  for(var i = 0; i < bufferSize; i++){
+    var white = Math.random() * 2 - 1;
+    output[i] = (lastOut + (0.02 * white)) / 1.02;
+    lastOut = output[i];
+    output[i] *= 3.5;
+  }
+  var noise = audioCtx.createBufferSource();
+  noise.buffer = noiseBuffer;
+  noise.loop = true;
+  var filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 400;
+  filter.Q.value = 0.8;
+  waveGain = audioCtx.createGain();
+  waveGain.gain.value = 0.15;
+  // LFO 模擬海浪起伏
+  var lfo = audioCtx.createOscillator();
+  lfo.type = "sine";
+  lfo.frequency.value = 0.15;
+  var lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 200;
+  lfo.connect(lfoGain);
+  lfoGain.connect(filter.frequency);
+  var lfo2 = audioCtx.createOscillator();
+  lfo2.type = "sine";
+  lfo2.frequency.value = 0.08;
+  var lfo2Gain = audioCtx.createGain();
+  lfo2Gain.gain.value = 0.08;
+  lfo2.connect(lfo2Gain);
+  lfo2Gain.connect(waveGain.gain);
+  noise.connect(filter);
+  filter.connect(waveGain);
+  waveGain.connect(audioCtx.destination);
+  noise.start();
+  lfo.start();
+  lfo2.start();
+}
 
-        function handleDialogueClick(e) {
-            // 如果点到的是“上一句”按钮则中断对话点击事件
-            if (e && e.target && e.target.closest('.prev-indicator')) return;
-            
-            if (isTyping) {
-                completeTypewriter();
-            } else {
-                advanceDialogue();
-            }
-        }
+function startGame(){
+  var overlay = document.getElementById("fadeOverlay");
+  var mysteryText = document.getElementById("mysteryText");
+  var voiceover = document.getElementById("voiceover");
+  overlay.classList.add("show");
+  // 0.8秒後黑幕完全覆蓋，顯示第一句文字並播放音效
+  setTimeout(function(){
+    startWaveBGM();
+    // 啟動遊戲全程BGM
+    var bgm = document.getElementById("bgm");
+    bgm.volume = 0.45;
+    bgm.currentTime = 0;
+    bgm.play().catch(function(e){ console.log("bgm play failed:", e); });
+    mysteryText.classList.add("show");
+    voiceover.currentTime = 0;
+    voiceover.play().catch(function(e){ console.log("voiceover play failed:", e); });
+  }, 800);
+  // 第一句配音結束後進入第二幕
+  voiceover.onended = function(){ goToScene2(); };
+}
 
-        // --- 3. 游戏流程控制 ---
-        function changeScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+function goToScene2(){
+  var mysteryText = document.getElementById("mysteryText");
+  var scene2Bg = document.getElementById("scene2Bg");
+  var scene2Text = document.getElementById("scene2Text");
+  var voiceover2 = document.getElementById("voiceover2");
+  // 第一句文字淡出
+  mysteryText.classList.remove("show");
+  mysteryText.classList.add("hide");
+  scene2Text.classList.add("show");
+  scene2Bg.classList.add("show");
+  voiceover2.currentTime = 0;
+  voiceover2.play().catch(function(e){ console.log("voiceover2 play failed:", e); });
+  voiceover2.onended = function(){ goToScene3(); };
+}
 
-            // 顶栏保存按钮的显隐逻辑
-            const topNav = document.getElementById('top-nav-bar');
-            if (screenId === 'adventure-screen' || screenId === 'puzzle-screen') {
-                topNav.style.display = 'flex';
-            } else {
-                topNav.style.display = 'none';
-            }
-        }
+function goToScene3(){
+  var scene2Bg = document.getElementById("scene2Bg");
+  var scene2Text = document.getElementById("scene2Text");
+  var scene3Bg = document.getElementById("scene3Bg");
+  var scene3Text = document.getElementById("scene3Text");
+  var voiceover3 = document.getElementById("voiceover3");
+  // 第二句文字淡出
+  scene2Text.classList.remove("show");
+  // 背景自然交叉淡入淡出
+  scene3Bg.classList.add("show");
+  setTimeout(function(){
+    scene2Bg.classList.remove("show");
+  }, 900);
+  scene3Text.classList.add("show");
+  voiceover3.currentTime = 0;
+  voiceover3.play().catch(function(e){ console.log("voiceover3 play failed:", e); });
+  voiceover3.onended = function(){ goToScene4(); };
+}
 
-        function changeBG(bgClass) {
-            document.getElementById('game-bg').className = 'background-layer ' + bgClass;
-        }
+function goToScene4(){
+  var scene3Bg = document.getElementById("scene3Bg");
+  var scene3Text = document.getElementById("scene3Text");
+  var scene4Bg = document.getElementById("scene4Bg");
+  var scene4Text = document.getElementById("scene4Text");
+  var voiceover4 = document.getElementById("voiceover4");
+  // 第三句文字淡出
+  scene3Text.classList.remove("show");
+  // 背景自然交叉淡入淡出
+  scene4Bg.classList.add("show");
+  setTimeout(function(){
+    scene3Bg.classList.remove("show");
+  }, 900);
+  scene4Text.classList.add("show");
+  voiceover4.currentTime = 0;
+  voiceover4.play().catch(function(e){ console.log("voiceover4 play failed:", e); });
+  voiceover4.onended = function(){ goToScene5(); };
+}
 
-        function startGame() {
-            playerHP = 3; hintCount = 0;
-            document.getElementById('hp-display').innerHTML = `<i class="fa-solid fa-heart"></i> 剩餘: ${playerHP}`;
-            document.getElementById('input-key').value = "";
-            document.getElementById('input-answer').value = "";
-            document.getElementById('puzzle-feedback').classList.remove('visible');
-            changeScreen('adventure-screen');
-            currentIndex = 0;
-            renderDialogue();
-        }
+function goToScene5(){
+  var scene4Bg = document.getElementById("scene4Bg");
+  var scene4Text = document.getElementById("scene4Text");
+  var scene5Bg = document.getElementById("scene5Bg");
+  var scene5Text = document.getElementById("scene5Text");
+  var voiceover5 = document.getElementById("voiceover5");
+  scene4Text.classList.remove("show");
+  scene5Bg.classList.add("show");
+  setTimeout(function(){
+    scene4Bg.classList.remove("show");
+  }, 900);
+  scene5Text.classList.add("show");
+  voiceover5.currentTime = 0;
+  voiceover5.play().catch(function(e){ console.log("voiceover5 play failed:", e); });
+  voiceover5.onended = function(){ goToScene6(); };
+}
 
-        function renderDialogue() {
-            const node = script[currentIndex];
-            changeBG(node.bg);
-            
-            // 姓名與樣式
-            const nameEl = document.getElementById('char-name');
-            nameEl.textContent = node.name;
-            nameEl.className = 'character-name ' + node.nameClass;
-            
-            // 啟動打字機效果
-            startTypewriter(node.text, 'char-text', 45);
-        }
+function goToScene6(){
+  var scene5Bg = document.getElementById("scene5Bg");
+  var scene5Text = document.getElementById("scene5Text");
+  var scene6Bg = document.getElementById("scene6Bg");
+  var scene6Text = document.getElementById("scene6Text");
+  var voiceover6 = document.getElementById("voiceover6");
+  scene5Text.classList.remove("show");
+  scene6Bg.classList.add("show");
+  setTimeout(function(){
+    scene5Bg.classList.remove("show");
+  }, 900);
+  scene6Text.classList.add("show");
+  voiceover6.currentTime = 0;
+  voiceover6.play().catch(function(e){ console.log("voiceover6 play failed:", e); });
+  voiceover6.onended = function(){ goToScene7(); };
+}
 
-        function advanceDialogue() {
-            const node = script[currentIndex];
-            if (node.triggerPuzzle) { changeScreen('puzzle-screen'); return; }
-            if (node.triggerVerify) { changeScreen('verify-screen'); return; }
-            if (node.isEnd) { changeScreen('title-screen'); return; }
-            currentIndex++;
-            if (currentIndex < script.length) { renderDialogue(); }
-        }
+function goToScene7(){
+  var scene6Bg = document.getElementById("scene6Bg");
+  var scene6Text = document.getElementById("scene6Text");
+  var scene7Bg = document.getElementById("scene7Bg");
+  var voiceover7 = document.getElementById("voiceover7");
+  scene6Text.classList.remove("show");
+  scene7Bg.classList.add("show");
+  setTimeout(function(){
+    scene6Bg.classList.remove("show");
+  }, 900);
+  voiceover7.currentTime = 0;
+  voiceover7.play().catch(function(e){ console.log("voiceover7 play failed:", e); });
+  voiceover7.onended = function(){ goToScene8(); };
+}
 
-        // 返回上一句对话
-        function prevDialogue(e) {
-            if (e) e.stopPropagation();
-            if (currentIndex > 0) {
-                currentIndex--;
-                renderDialogue();
-            }
-        }
+var scene8Timer = null;
+function goToScene8(){
+  var scene7Bg = document.getElementById("scene7Bg");
+  var scene8Bg = document.getElementById("scene8Bg");
+  var voiceover8 = document.getElementById("voiceover8");
+  var slides = document.querySelectorAll("#scene8Slideshow .slide");
+  scene7Bg.classList.remove("show");
+  scene8Bg.classList.add("show");
+  // 謎題圖片輪播：每1.8秒切換一張
+  var idx = 0;
+  scene8Timer = setInterval(function(){
+    slides[idx].classList.remove("active");
+    idx = (idx + 1) % slides.length;
+    slides[idx].classList.add("active");
+  }, 1800);
+  voiceover8.currentTime = 0;
+  voiceover8.play().catch(function(e){ console.log("voiceover8 play failed:", e); });
+  voiceover8.onended = function(){
+    if(scene8Timer){ clearInterval(scene8Timer); scene8Timer = null; }
+    goToScene9();
+  };
+}
 
-        // 从解密页面返回上一步剧情
-        function exitPuzzleToPrev() {
-            changeScreen('adventure-screen');
-            renderDialogue();
-        }
+function goToScene9(){
+  var scene8Bg = document.getElementById("scene8Bg");
+  var scene9Bg = document.getElementById("scene9Bg");
+  var voiceover9 = document.getElementById("voiceover9");
+  scene8Bg.classList.remove("show");
+  scene9Bg.classList.add("show");
+  voiceover9.currentTime = 0;
+  voiceover9.play().catch(function(e){ console.log("voiceover9 play failed:", e); });
+}
 
-        // --- 4. 保存与读取 (Save/Load) ---
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('visible');
-            setTimeout(() => toast.classList.remove('visible'), 1500);
-        }
+function startJourney(){
+  var clickSfx = document.getElementById("clickSfx");
+  clickSfx.currentTime = 0;
+  clickSfx.play().catch(function(e){ console.log("click sfx failed:", e); });
+  document.getElementById("codeModal").classList.add("show");
+  setTimeout(function(){
+    var firstInput = document.querySelector(".code-inputs input");
+    if(firstInput) firstInput.focus();
+  }, 300);
+}
 
-        function saveGame() {
-            const saveData = {
-                currentIndex: currentIndex,
-                playerHP: playerHP,
-                hintCount: hintCount
-            };
-            localStorage.setItem('pirate_legacy_save', JSON.stringify(saveData));
-            showToast("進度已保存");
-            document.getElementById('btn-continue').style.display = 'block';
-        }
+function closeCodeModal(){
+  document.getElementById("codeModal").classList.remove("show");
+  document.getElementById("codeError").classList.remove("show");
+  document.querySelectorAll(".code-inputs input").forEach(function(inp){ inp.value = ""; inp.classList.remove("filled"); });
+}
 
-        function loadGame() {
-            const raw = localStorage.getItem('pirate_legacy_save');
-            if (!raw) return;
-            try {
-                const data = JSON.parse(raw);
-                currentIndex = data.currentIndex || 0;
-                playerHP = data.playerHP || 3;
-                hintCount = data.hintCount || 0;
+function verifyCode(){
+  var inputs = document.querySelectorAll(".code-inputs input");
+  var code = "";
+  inputs.forEach(function(inp){ code += inp.value.toLowerCase(); });
+  var errorEl = document.getElementById("codeError");
+  if(code === "1605" || code === "guli"){
+    errorEl.classList.remove("show");
+    closeCodeModal();
+    goToScene10();
+  } else {
+    errorEl.classList.add("show");
+    inputs.forEach(function(inp){ inp.value = ""; inp.classList.remove("filled"); });
+    inputs[0].focus();
+  }
+}
 
-                document.getElementById('hp-display').innerHTML = `<i class="fa-solid fa-heart"></i> 剩餘: ${playerHP}`;
-                
-                const node = script[currentIndex];
-                if (node.triggerPuzzle) {
-                    changeScreen('puzzle-screen');
-                } else if (node.triggerVerify) {
-                    changeScreen('verify-screen');
-                } else {
-                    changeScreen('adventure-screen');
-                    renderDialogue();
-                }
-                showToast("已加載存檔");
-            } catch (err) {
-                console.error("加载存档失败", err);
-            }
-        }
+// 驗證碼輸入框：自動跳轉、退格回退
+document.addEventListener("DOMContentLoaded", function(){
+  var inputs = document.querySelectorAll(".code-inputs input");
+  inputs.forEach(function(inp, idx){
+    inp.addEventListener("input", function(){
+      if(inp.value){
+        inp.classList.add("filled");
+        if(idx < inputs.length - 1) inputs[idx + 1].focus();
+      } else {
+        inp.classList.remove("filled");
+      }
+    });
+    inp.addEventListener("keydown", function(e){
+      if(e.key === "Backspace" && !inp.value && idx > 0){
+        inputs[idx - 1].focus();
+      }
+      if(e.key === "Enter"){
+        verifyCode();
+      }
+    });
+  });
+});
 
-        // --- 5. 解密判定与处罚特效 ---
-        function checkPuzzle() {
-            const keyInput = document.getElementById('input-key').value.trim().toUpperCase();
-            const answerInput = document.getElementById('input-answer').value.trim().toUpperCase().replace(/[^A-Z]/g, ''); 
-            const feedback = document.getElementById('puzzle-feedback');
-            const vignette = document.getElementById('game-vignette');
+function goToScene10(){
+  var scene9Bg = document.getElementById("scene9Bg");
+  var scene10Bg = document.getElementById("scene10Bg");
+  var voiceover10 = document.getElementById("voiceover10");
+  scene9Bg.classList.remove("show");
+  scene10Bg.classList.add("show");
+  voiceover10.currentTime = 0;
+  voiceover10.play().catch(function(e){ console.log("voiceover10 play failed:", e); });
+}
 
-            const correctKey = "CATASTROPHE";
-            const correctAnswer = "SPAULO";
+function arrivedAtLocation(){
+  var clickSfx = document.getElementById("clickSfx");
+  clickSfx.currentTime = 0;
+  clickSfx.play().catch(function(e){});
+  setTimeout(function(){
+    window.location.href = "2.html";
+  }, 200);
+}
+</script>
 
-            if (keyInput === correctKey && answerInput === correctAnswer) {
-                document.activeElement.blur(); 
-                feedback.style.color = "var(--accent-green)";
-                feedback.textContent = "解密成功！機關已開啟！";
-                feedback.classList.add('visible');
-                
-                setTimeout(() => {
-                    feedback.classList.remove('visible');
-                    changeScreen('adventure-screen');
-                    currentIndex = 8; 
-                    renderDialogue();
-                    saveGame(); // 解密成功自动存档一次
-                }, 1500);
-            } 
-            else {
-                playerHP--;
-                document.getElementById('hp-display').innerHTML = `<i class="fa-solid fa-heart"></i> 剩餘: ${playerHP}`;
-                
-                const panel = document.getElementById('puzzle-panel');
-                panel.classList.add('shake');
-                vignette.style.background = 'radial-gradient(circle, rgba(239, 68, 68, 0.35) 30%, rgba(0,0,0,0.95) 100%)';
-                
-                setTimeout(() => {
-                    panel.classList.remove('shake');
-                    vignette.style.background = 'radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%)';
-                }, 400);
-
-                feedback.style.color = "var(--accent-red)";
-                
-                if (playerHP <= 0) {
-                    feedback.textContent = "失敗次數過多！強制退回起點。";
-                    feedback.classList.add('visible');
-                    setTimeout(() => {
-                        feedback.classList.remove('visible');
-                        changeScreen('title-screen'); changeBG('bg-start');
-                    }, 2000);
-                } else {
-                    feedback.textContent = keyInput !== correctKey ? "密鑰(KEY)推算錯誤！" : "密鑰正確，但目的地有誤。";
-                    feedback.classList.add('visible');
-                }
-            }
-        }
-
-        function getHint() {
-            const feedback = document.getElementById('puzzle-feedback');
-            feedback.style.color = "#fbbf24";
-            hintCount++;
-            if (hintCount === 1) feedback.textContent = "提示 1：「災難」的英文是 CATASTROPHE。";
-            else if (hintCount === 2) feedback.innerHTML = "提示 2：依維吉尼亞密碼規則，明文 = 密文 − 密鑰。首字密文 U=20，首字密鑰 C=2，20−2=18，對照字母表 18=S，故明文首字為 S。";
-            else feedback.textContent = "正確答案：KEY=CATASTROPHE，目的地=SPAULO。";
-            feedback.classList.add('visible');
-        }
-
-        // --- 6. 密碼驗證跳转逻辑 ---
-        function checkUnlockPassword() {
-            const passInput = document.getElementById('input-pass').value.trim();
-            const feedback = document.getElementById('verify-feedback');
-            const panel = document.getElementById('verify-panel');
-            const correctPassword = "1605";
-
-            if (passInput === correctPassword) {
-                feedback.style.color = "var(--accent-green)";
-                feedback.textContent = "驗證成功！正在載入完整遊戲...";
-                feedback.classList.add('visible');
-                
-                setTimeout(() => {
-                    window.location.href = "2.html";
-                }, 1000);
-            } else {
-                panel.classList.add('shake');
-                setTimeout(() => panel.classList.remove('shake'), 400);
-                
-                feedback.style.color = "var(--accent-red)";
-                feedback.textContent = "密碼錯誤，請檢查小紅書購買憑證！";
-                feedback.classList.add('visible');
-            }
-        }
-    </script>
 </body>
 </html>
